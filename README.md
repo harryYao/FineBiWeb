@@ -1,7 +1,7 @@
 # FineBiWeb
 
 > 本项目是在FineBI中内嵌web页面, 主要对官方公开的api进行测试学习
-> 基于该文档 https://help.finebi.com/doc-view-62.html 提供的api, 整理的一个测试demo
+> 基于该文档 [FineBI web集成](https://help.finebi.com/doc-view-62.html)  提供的api, 整理的一个测试demo
 
 
 ## dev Setup
