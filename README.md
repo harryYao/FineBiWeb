@@ -1,8 +1,8 @@
-# finebi_p1
+# FineBiWeb
 
-> A Vue.js project
+> A Vue.js project 
 
-## Build Setup
+## dev Setup
 
 ``` bash
 # install dependencies
