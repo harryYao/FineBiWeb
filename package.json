@@ -2,7 +2,7 @@
   "name": "finebi_p1",
   "version": "1.0.0",
   "description": "A Vue.js project",
-  "author": "yaoxin <yaoxin1@ztgame.com>",
+  "author": "harryYao",
   "private": true,
   "scripts": {
     "dev": "webpack-dev-server --inline --progress --config build/webpack.dev.conf.js",
