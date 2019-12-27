@@ -1,0 +1,66 @@
+/*
+* @页面重置通用css
+*/
+html,
+body {
+  // height: 100%;
+  padding: 0;
+  margin: 0;
+  font-size: 14px;
+  font-family: "Open Sans", Segoe UI,SegoeUI,Segoe WP,Helvetica Neue,Helvetica,Tahoma,Arial,sans-serif;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+}
+p,h1,h2,h3,h4,h5,h6,ul,li{padding:0;margin:0;}
+// p,ul,li{padding:0;margin:0;}
+ul,dl{list-style: none;}
+// i,em{font-style:normal;}
+[v-cloak]{ display: none!important;  }
+.pr{position:relative;}
+.pa{position:absolute;}
+.pf{position:fixed;}
+.clearfix:after{content:".";display:block;clear:both;visibility:hidden;line-height: 0;font-size: 0;height: 0}
+.clearfix{zoom:1}
+.none{display:none;}
+.fl{float: left;}
+.fr{float: right;}
+.tc{text-align: center;}
+.tl{text-align: left;}
+.tr{text-align: right;}
+.hide{ display: none;}
+
+*{ border:none; box-sizing: border-box; -webkit-tap-highlight-color:rgba(0,0,0,0);}
+body { text-align:left; position:relative;-webkit-overflow-scrolling: touch;}
+table { border-collapse: collapse; border-spacing: 0;}
+img { border: 0px; }
+a:link, a:visited {  text-decoration: none; cursor:pointer; overflow: hidden;}
+a:hover { text-decoration: none; overflow: hidden;}
+// ul { list-style-type:none; border:0px;}
+// li { list-style: none outside none;}
+// li:focus {outline: none;}
+// h1, em, th { font-style: normal; font-weight: normal; font-size:inherit;}
+// input, textarea, select { font-family: inherit; font-size: inherit; font-weight: inherit;-webkit-appearance:none;-moz-appearance:none;appearance:none;border-radius:0; -webkit-border-radius:0;}
+div {display: block;}
+.L{ float:left;}
+.R{ float:right;}
+.w{ width:100%; height:auto; float:left;}
+.hide{ display:none;}
+.hedd{visibility:hidden}
+
+td{border: 1px solid #BBB;}
+ol{
+  margin: 0;
+  padding: 0;
+  margin-left: 17px;
+}
+input,textarea {
+  font-family: Segoe UI,SegoeUI,Segoe WP,Helvetica Neue,Helvetica,Tahoma,Arial,sans-serif;
+  &::-webkit-input-placeholder {
+    font-family: Segoe UI,SegoeUI,Segoe WP,Helvetica Neue,Helvetica,Tahoma,Arial,sans-serif;
+  }
+  &::-moz-placeholder {
+    font-family: Segoe UI,SegoeUI,Segoe WP,Helvetica Neue,Helvetica,Tahoma,Arial,sans-serif;
+  }
+  &::-ms-input-placeholder {
+    font-family: Segoe UI,SegoeUI,Segoe WP,Helvetica Neue,Helvetica,Tahoma,Arial,sans-serif;
+  }
+}
