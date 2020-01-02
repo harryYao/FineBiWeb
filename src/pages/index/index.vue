@@ -1,6 +1,9 @@
 <template>
   <div class="main-container">
-    <header><h3>{{ test }}</h3></header>
+    <header>
+      <h3>{{ test }}</h3> 
+      <router-link to="interface">interface</router-link>
+    </header>
     <div class="token"><b>Token:</b> {{ token }}</div>
     <ul class="api-list">
       <li v-for="item in apilist" :key="item.name">
@@ -34,7 +37,7 @@ export default {
       jsondata: {},
       test: 'FineBI 嵌入式WEB API测试',
       username: 'admin',
-      password: 'ztgame@20160303',
+      password: 'admin',
       testReportId: 'de706cb2bc2443759eb4367aadefe131',
       testUserId: 'b2e6d799-6a91-4779-aa08-a6d033cefeb5',
       token: '',

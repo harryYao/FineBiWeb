@@ -1,7 +1,10 @@
 import axios from 'axios'
 
 const service = axios.create({
-  baseURL: process.env.BASE_API
+  baseURL: process.env.BASE_API,
+  headers: {
+    'Content-Type': 'application/json;charset=UTF-8'
+  },
 })
 
 
@@ -21,7 +24,7 @@ service.interceptors.request.use(config => {
 
 // respone拦截器
 service.interceptors.response.use(
-  response => response,
+  response => response.data,
 )
 
 export default service
