@@ -13,8 +13,8 @@
     <p>返回数据</p>
     <div>
       <div class="tabs">
-        <span @click="tabindex = 0">JSON</span>
-        <span @click="tabindex = 1">TEXT</span>
+        <span :class="{active: tabindex === 0 }" @click="tabindex = 0">JSON</span>
+        <span :class="{active: tabindex === 1 }" @click="tabindex = 1">TEXT</span>
       </div>
       <json-view theme="vs-code" :data="res" v-if="tabindex === 0"/>
       <textarea class="res-body" v-if="tabindex === 1" name="" id="" cols="200" rows="20" v-model="res_str" readonly></textarea>
@@ -32,8 +32,8 @@ export default {
   data () {
     return {
       test: '手动填写API测试页面',
-      username: 'admin',
-      password: 'admin',
+      username: 'yaoxin1',
+      password: 'Giant18031_5',
       token: '',
       path: '',
       params: '',
@@ -58,6 +58,10 @@ export default {
           console.log(data);
           this.res = data;
           this.res_str = JSON.stringify(data);
+          if (this.path === '/v10/entries/all') {
+            const result = this.jsonToTree(data.data, 'id', 'pId');
+            console.log(result);
+          }
         })
         .catch((error) => {
           console.error(error);
@@ -91,6 +95,29 @@ export default {
         .catch((error) => {
           console.log(error);
         });
+    },
+    jsonToTree(jsonData, id, pid) {
+      let result = [],
+        temp = {};
+      for (let i = 0; i < jsonData.length; i++) {
+        temp[jsonData[i][id]] = jsonData[i]; // 以id作为索引存储元素，可以无需遍历直接定位元素
+      }
+      for (let j = 0; j < jsonData.length; j++) {
+        let currentElement = jsonData[j];
+        let tempCurrentElementParent = temp[currentElement[pid]]; // 临时变量里面的当前元素的父元素
+        if (tempCurrentElementParent) {
+          // 如果存在父元素
+          if (!tempCurrentElementParent["children"]) {
+            // 如果父元素没有chindren键
+            tempCurrentElementParent["children"] = []; // 设上父元素的children键
+          }
+          tempCurrentElementParent["children"].push(currentElement); // 给父元素加上当前元素作为子元素
+        } else {
+          // 不存在父元素，意味着当前元素是一级元素
+          result.push(currentElement);
+        }
+      }
+      return result;
     }
   }
 }
@@ -99,13 +126,13 @@ export default {
 <style lang='less' scoped>
 .interface-container {
   display: block;
-  padding: 30px;
+  padding: 10px 30px;
   .token {
-    margin-top: 20px;
+    margin-top: 10px;
   }
   .login {
     padding: 10px;
-    margin: 20px;
+    margin: 10px;
     border-radius: 4px;
     cursor: pointer;
   }
@@ -138,10 +165,20 @@ export default {
       background: #dae1f1;
     }
   }
+  .tabs {
+    span {
+      display: inline-block;
+      padding: 5px 10px;
+      border: 1px solid #142f68;
+      border-radius: 4px 4px  0 0;
+      &.active {
+        background-color: #88a6c4;
+      }
+    }
+  }
   .res-body {
     background: #f0e5d5;
     border: 1px solid #c3c488;
-    margin: 10px;
     display: block;
   }
 }
