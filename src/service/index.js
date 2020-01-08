@@ -1,4 +1,5 @@
 import axios from 'axios'
+import store from '../store'
 
 const service = axios.create({
   baseURL: process.env.BASE_API,
@@ -11,9 +12,9 @@ const service = axios.create({
 // request拦截器
 service.interceptors.request.use(config => {
   // Do something before request is sent
-  // console.log(config)
+  // console.log(store.getters.token)
   // if (store.getters.token) {
-  //   config.headers['X-Token'] = getToken() // 让每个请求携带token--['X-Token']为自定义key 请根据实际情况自行修改
+  //   config.headers['Authorization'] = store.getters.token // 让每个请求携带token--['Authorization']为自定义key 请根据实际情况自行修改
   // }
   return config
 }, error => {
@@ -24,7 +25,18 @@ service.interceptors.request.use(config => {
 
 // respone拦截器
 service.interceptors.response.use(
-  response => response.data,
+  // response => response.data,
+  response => {
+    const res = response.data;
+    if (res.data) {
+      return res.data;
+    } else if (res.errorCode){
+      this.$message.error(res.errorMsg);
+      return res;
+    } else {
+      return res;
+    }
+  }
 )
 
 export default service

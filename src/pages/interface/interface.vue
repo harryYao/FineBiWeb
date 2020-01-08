@@ -32,8 +32,8 @@ export default {
   data () {
     return {
       test: '手动填写API测试页面',
-      username: 'yaoxin1',
-      password: 'Giant18031_5',
+      username: '',
+      password: '',
       token: '',
       path: '',
       params: '',
