@@ -188,13 +188,17 @@ export default {
     },
     getMenuList() {
       // '/v10/{directoryId}/entries/{privilegeType}'
-      service.get(`/v10/decision-directory-root/entries?fine_auth_token=${this.token}`)
+      // service.get(`/v10/decision-directory-root/entries?fine_auth_token=${this.token}`)
+      service.get(`/v10/entries/all?fine_auth_token=${this.token}`)
         .then((data) => {
           if (data) {
             const result = jsonToTree(data, 'id', 'pId');
-            this.result = result;
-            for (let index = 0; index < result.length; index++) {
-              const element = result[index];
+            const temp = result.find((item) => {
+              return item.id === 'decision-directory-root'
+            })
+            this.result = temp.children;
+            for (let index = 0; index < this.result.length; index++) {
+              const element = this.result[index];
               this.games.push({ text: element.text, id: element.id });
             }
           }

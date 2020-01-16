@@ -107,6 +107,7 @@ export default {
 
   .login-box {
     width: 720px;
+    min-width: 720px;
     height: 380px;
     box-shadow: 0 10px 30px 0 rgba(0,63,163,.2);
     position: relative;

@@ -27,6 +27,7 @@ service.interceptors.request.use(config => {
 service.interceptors.response.use(
   // response => response.data,
   response => {
+    console.log('response' , response);
     const res = response.data;
     if (res.data) {
       return res.data;
@@ -36,6 +37,8 @@ service.interceptors.response.use(
     } else {
       return res;
     }
+  }, function(error) {
+    console.log(error.response.status)
   }
 )
 
