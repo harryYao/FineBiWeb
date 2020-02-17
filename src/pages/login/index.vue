@@ -18,7 +18,7 @@
         <div class="item">
           <div class="input-item">
             <i class="icon el-icon-lock"></i>
-            <input name="password" type="password" placeholder="密码" v-model="password">
+            <input name="password" type="password" placeholder="密码" v-model="password" @keypress.enter="login">
           </div>
         </div>
         <div class="item">
@@ -75,13 +75,13 @@ export default {
             this.$store.commit('setUserName', data.username);
             this.$router.push('/')
           } else if(data.errorCode){
-            // if (data.errorCode === '22400002') {
-            //   this.$message.error('用户不存在！')
-            // } else if (data.errorCode === '21300007') {
-            //   this.$message.error('用户密码错误！')
-            // } else {
-            //   this.$message.error(data.errorMsg)
-            // }
+            if (data.errorCode === '22400002') {
+              this.$message.error('用户不存在！')
+            } else if (data.errorCode === '21300007') {
+              this.$message.error('用户不存在或密码错误！')
+            } else {
+              this.$message.error(data.errorMsg)
+            }
           }
         })
         .catch((error) => {
@@ -118,7 +118,7 @@ export default {
       right: 270px;
       top: 0;
       bottom: 0;
-      background-image: url('/static/qqimg.jpg');
+      background-image: url('../../../static/login_bg.png');
       background-position: center;
       background-size: cover; 
       .left-inner {
@@ -127,15 +127,16 @@ export default {
         top: 0px;
         bottom: 0px;
         position: absolute;
-        background-color: rgba(0,84,230,.7);
+        background-color: rgba(79, 88, 105, 0.6);
         .logo {
-          margin: 140px auto 30px;
+          margin: 120px auto 30px;
           height: 30px;
           width: 100%;
         }
         .title {
           text-align: center;
-          font-size: 20px;
+          font-size: 22px;
+          font-weight: 600;
           color: #FFF;
         }
       }

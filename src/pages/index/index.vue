@@ -2,11 +2,13 @@
   <div class="main-container">
     <el-container>
       <el-header height="40px">
-        <div class="left">
-          <div class="logo-name">巨人商业智能</div>
-          <div v-if="game">
-            <el-button :class="{ active: activeId === item.id}" v-for="item in game.children" :key="item.id" @click="chooseModule(item)">{{ item.text }}</el-button>
-          </div>
+        <div class="logo-name">巨人商业智能</div>
+        <div class="modules">
+          <template v-if="game">
+            <el-scrollbar>
+            <div class="module" :class="{ active: activeId === item.id}" v-for="item in game.children" :key="item.id" @click="chooseModule(item)">{{ item.text }}</div>
+            </el-scrollbar>
+          </template>
         </div>
         <div class="right">
           <el-select v-model="gameid" placeholder="请选择" @change="selectGame">
@@ -15,6 +17,8 @@
               :key="item.id"
               :label="item.text"
               :value="item.id">
+              <span class="icon" ></span>
+              <span>{{ item.text }}</span>
             </el-option>
           </el-select>
           <el-dropdown @command="handleCommand">
@@ -43,7 +47,7 @@
               :name="item.name"
               :closable="index > 0"
             >
-              <iframe :src="item.url" width="100%" height="100%" frameborder="0"></iframe>
+              <iframe :id="`iframe_${item.name}`" :src="item.url" width="100%" height="100%" frameborder="0"></iframe>
             </el-tab-pane>
           </el-tabs>
           <div class="tabs-remove">
@@ -64,6 +68,7 @@
 
 <script>
 import { mapState } from 'vuex';
+import jsonp from '../../service/jsonp'
 import service from '../../service/index'
 import { jsonToTree } from '../../utils/utils'
 
@@ -87,7 +92,10 @@ export default {
       result: [],
       reports: [],
       editableTabs: [],
-      editableTabsValue: 'home'
+      editableTabsValue: 'home',
+      refreshpid: '',
+      refreshList: [],
+      timeList: []
     };
   },
   created() {
@@ -111,6 +119,7 @@ export default {
       const item = this.editableTabs.find((item) => {
         return item.name === id
       })
+      this.addInterval(id);
       if (!item) {
         this.editableTabs.push({
           title: text,
@@ -120,7 +129,17 @@ export default {
       }
       this.editableTabsValue = id;
     },
+    addInterval(id) {
+      if (this.refreshList.includes(id)) {
+        const timer = setInterval(function() {
+          console.log('refresh iframe :', id)
+          document.getElementById(`iframe_${id}`).contentWindow.location.reload(true);
+        }, 5*60*1000)
+        this.timeList.push(timer);
+      }
+    },
     removeTab(targetName) {
+      console.log(targetName);
       let tabs = this.editableTabs;
       let activeName = this.editableTabsValue;
       if (activeName === targetName) {
@@ -141,6 +160,7 @@ export default {
       this.game = this.result.find((item) => {
         return item.id === this.gameid
       })
+      this.getTheRefreshPId(this.game);
       if (this.game.children && this.game.children.length > 0) {
         this.activeId = this.game.children[0].id
         this.treeData = this.game.children[0].children;
@@ -148,12 +168,15 @@ export default {
     },
     getIFrameSrc(id) {
       if (id) {
-        return `${this.baseapi}/v10/entry/access/${id}?dashboardType=4`;
+        return `${this.baseapi}/v10/entry/access/${id}?dashboardType=5`;
       }
       return '';
     },
     getHomePageSrc(id) {
-      return `${this.baseapi}/v5/design/report/${id}/view?entryType=5`
+      // `/webroot/decision/v10/entry/access/09d9715a-0e10-4ea4-98c7-7ebabae571f7?dashboardType=5`
+      // `http://bi.battleofballs.com`
+      // `/webroot/decision/v10/enter/access/09d9715a-0e10-4ea4-98c7-7ebabae571f7?dashboardType=5`
+      return `${this.baseapi}/v10/entry/access/${id}?dashboardType=5`;
     },
     chooseModule(item) {
       this.activeId = item.id
@@ -161,12 +184,15 @@ export default {
       if (!item.isParent) {
         this.currentReport = item;
       }
+      this.addTab(item.text, this.getIFrameSrc(item.id), item.id)
+      this.getTheRefreshPId(item);
     },
     handleNodeClick(data) {
       if (data.isParent) {
         return;
       }
       this.currentReport = data;
+      console.log(data);
       this.addTab(data.text, this.getIFrameSrc(data.id), data.id)
     },
     handleCommand(command) {
@@ -175,16 +201,33 @@ export default {
       }
     },
     logout() {
-      service.post(`/logout`,{},
-        {
-          headers: { 'Authorization': this.token }
-        }).
-        then((data) => {
-          if (data === 'success') {  
-            this.$store.commit('setToken', '');
-            this.$router.push('/login')
+      // service.post(`/logout?fine_auth_token=${this.token}`,{},
+      //   {
+      //     headers: { 'Authorization': this.token }
+      //   }).
+      //   then((data) => {
+      //     if (data === 'success') {  
+      //       this.$store.commit('setToken', '');
+      //       this.$router.push('/login')
+      //     }
+      //   })
+
+      // 跨域登出
+      const url = `/logout/cross/domain?fine_auth_token=${this.token}`;
+      jsonp(url).then((data) => {
+        console.log(data)
+        this.$store.commit('setToken', '');
+        this.$router.push('/login')
+      })
+    },
+    getTheRefreshPId(item) {
+      if (item.id === this.refreshpid) {
+        this.game.children.forEach((item) => {
+          if (!this.refreshList.includes(item.id)) {
+            this.refreshList.push(item.id);
           }
         })
+      }
     },
     getMenuList() {
       // '/v10/{directoryId}/entries/{privilegeType}'
@@ -199,6 +242,10 @@ export default {
             this.result = temp.children;
             for (let index = 0; index < this.result.length; index++) {
               const element = this.result[index];
+              if (element.text === '实时监控') {
+                this.refreshpid = element.id;
+              }
+              
               this.games.push({ text: element.text, id: element.id });
             }
           }
@@ -227,7 +274,11 @@ export default {
 </script>
 
 <style lang='less' scoped>
-@mc: rgb(64, 137, 231);
+@mc: #4a488e;
+@top-bar: #8491c3;
+@top-mc: #7361b3;
+@top-mc-active: #5b6896;
+
 
 .main-container {
   display: block;
@@ -239,35 +290,60 @@ export default {
       text-align: center;
       line-height: 40px;
       height: 40px;
-      display: flex;
-      .left {
-        display: flex;
-        flex: 1;
+      width: 100%;
+      background-color: @top-bar;
+      &::after {
+        float: clear;
+      }
+      .logo-name {
+        float: left;
+        width: 220px;
+        font-weight: 600;
+        font-size: 18px;
+        color: #FFF;
         text-align: left;
-        .logo-name {
-          width: 220px;
+      }
+      .modules {
+        float: left;
+        height: 40px;
+        width: calc(100% - 520px);
+        /deep/.el-scrollbar .el-scrollbar__wrap {
+          height: calc(100% + 17px);
+          .el-scrollbar__view{
+            white-space: nowrap;
+            text-align: left;
+          }
         }
-        .el-button {
+        .module{
+          // float: left;
+          display: inline-block;
           height: 40px;
           border: none;
           line-height: 40px;
           padding: 0 20px;
           border-radius: 0;
           margin-left: 0px;
-          margin-right: 2px;
-          background-color: rgb(221, 232, 247);
+          border-right: 1px solid #ababab;
+          background-color: lighten(@mc, 20);
+          color: #ededed;
+          cursor: pointer;
           &.active {
-            background-color: @mc;
+            background-color: lighten(@mc, 10%);
             color: #FFF;
+          }
+          &::after {
+            clear: both;
           }
         }
       }
       .right {
+        float: left;
         width: 300px;
         /deep/.el-select {
+          width: 140px;
           .el-input {
             .el-input__inner {
-              background-color: rgb(221, 232, 247);;
+              background-color: #FFFFFF;
               border: none;
               border-radius: 0;
             }
@@ -279,6 +355,7 @@ export default {
           }
         }
         /deep/.el-dropdown {
+          width: 140px;
           margin-left: 10px;
         }
       }
@@ -295,7 +372,7 @@ export default {
           height: 40px;
           &:hover {
             color: #FFF;
-            background-color: rgba(103, 153, 219, 1);
+            background-color: lighten(@mc, 20%);
           }
         }
         .el-tree-node.is-current {
@@ -306,7 +383,7 @@ export default {
         }
         .el-tree-node:focus > .el-tree-node__content {
           color: #FFF;
-          background-color: @mc;
+          background-color: lighten(@mc, 10%);
         }
       }
     }
@@ -322,8 +399,24 @@ export default {
         height: 100%;
         .el-tabs__header {
           margin-bottom: 0;
+          .el-tabs__item {
+            height: 30px;
+            line-height: 30px;
+            font-size: 12px;
+            &:hover {
+              color: lighten(@mc, 10%);
+            }
+            .el-icon-close {
+              text-align: center;
+              &::before {
+                transform: scale(1);
+              }
+            }
+          }
           .el-tabs__item.is-active {
             border-bottom: 1px solid @mc;
+            color: @mc;
+            font-weight: bold;
             background-color: #FFF;
           }
         }
@@ -333,6 +426,27 @@ export default {
             height: 100%;
           }
         }
+      }
+    }
+  }
+}
+
+.el-select-dropdown {
+  .el-select-dropdown__list {
+    .el-select-dropdown__item {
+      padding: 0 12px;
+      &.selected {
+        color: @mc;
+      }
+      .icon {
+        background-image: url('~/static/gamesicon/qiuqiu.png');
+        background-size: 100% 100%;
+        border-radius: 6px;
+        width: 24px;
+        height: 24px;
+        display: inline-block;
+        vertical-align: middle;
+        margin-right: 2px;
       }
     }
   }

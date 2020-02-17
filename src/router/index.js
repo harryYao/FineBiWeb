@@ -8,7 +8,7 @@ import InterfacePage from '@/pages/interface/interface'
 Vue.use(Router)
 
 let router = new Router({
-  mode: 'history',
+  // mode: 'history',
   base: '/webroot/',
   routes: [
     {
