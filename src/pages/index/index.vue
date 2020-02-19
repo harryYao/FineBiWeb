@@ -1,8 +1,11 @@
 <template>
   <div class="main-container">
     <el-container>
-      <el-header height="40px">
-        <div class="logo-name">巨人商业智能</div>
+      <el-header height="50px">
+        <div class="logo-name">
+          <span class="logo"></span>
+          <span class="text">球球智能报表</span>
+        </div>
         <div class="modules">
           <template v-if="game">
             <el-scrollbar>
@@ -17,10 +20,11 @@
               :key="item.id"
               :label="item.text"
               :value="item.id">
-              <span class="icon" ></span>
-              <span>{{ item.text }}</span>
+              <span class="icon" :style="{backgroundImage: `url('/webroot/static/gamesicon/${getGameIcon(item.text)}')`}"></span>
+              <span class="text">{{ item.text }}</span>
             </el-option>
           </el-select>
+          <span class="gameicon" v-if="game" :style="{backgroundImage: `url('/webroot/static/gamesicon/${getGameIcon(game.text)}')`}"></span>
           <el-dropdown @command="handleCommand">
             <span class="el-dropdown-link">
               {{ username }}<i class="el-icon-arrow-down el-icon--right"></i>
@@ -34,7 +38,7 @@
       <el-container>
         <el-aside width="240px">
           <div v-if="treeData">
-            <el-tree :data="treeData" :props="defaultProps" @node-click="handleNodeClick"></el-tree>
+            <el-tree :data="treeData" node-key="id" :current-node-key="currentnode" :props="defaultProps" @node-click="handleNodeClick" @node-expand="handleNodeExpand"></el-tree>
           </div>
         </el-aside>
         <el-main>
@@ -89,6 +93,7 @@ export default {
         label: 'text'
       },
       currentReport: null,
+      currentnode: '',
       result: [],
       reports: [],
       editableTabs: [],
@@ -184,16 +189,29 @@ export default {
       if (!item.isParent) {
         this.currentReport = item;
       }
-      this.addTab(item.text, this.getIFrameSrc(item.id), item.id)
-      this.getTheRefreshPId(item);
+      // this.addTab(item.text, this.getIFrameSrc(item.id), item.id)
+      if (item.text === '实时监控') {
+        this.refreshpid = item.id;
+      }
     },
     handleNodeClick(data) {
+      console.log('handleNodeClick:' + data.text);
       if (data.isParent) {
+        if (data.text === '实时监控') {
+          this.refreshpid = data.id;
+        }
         return;
       }
+      
+      this.getTheRefreshPId(data);
       this.currentReport = data;
-      console.log(data);
       this.addTab(data.text, this.getIFrameSrc(data.id), data.id)
+    },
+    handleNodeExpand(node) {
+      console.log('handleNodeExpand:' + node.text)
+      if (node.text === '实时监控') {
+        this.refreshpid = node.id;
+      }
     },
     handleCommand(command) {
       if (command === 'logout') {
@@ -215,19 +233,23 @@ export default {
       // 跨域登出
       const url = `/logout/cross/domain?fine_auth_token=${this.token}`;
       jsonp(url).then((data) => {
-        console.log(data)
         this.$store.commit('setToken', '');
         this.$router.push('/login')
       })
     },
     getTheRefreshPId(item) {
-      if (item.id === this.refreshpid) {
-        this.game.children.forEach((item) => {
-          if (!this.refreshList.includes(item.id)) {
-            this.refreshList.push(item.id);
-          }
-        })
+      if (item.pId === this.refreshpid) {
+        console.log('add a refresh iframe:' + item.id)
+        if (!this.refreshList.includes(item.id)) {
+          this.refreshList.push(item.id);
+        }
       }
+    },
+    getGameIcon(name) {
+      const list = {
+        '球球大作战': 'qiuqiu.png'
+      }
+      return list[name] ? list[name] : 'default.png';
     },
     getMenuList() {
       // '/v10/{directoryId}/entries/{privilegeType}'
@@ -242,11 +264,13 @@ export default {
             this.result = temp.children;
             for (let index = 0; index < this.result.length; index++) {
               const element = this.result[index];
-              if (element.text === '实时监控') {
-                this.refreshpid = element.id;
+              // this.games.push({ text: element.text, id: element.id });
+
+              if (element.text === '球球大作战') {
+                this.games.push({ text: element.text, id: element.id });
+                this.gameid = element.id;
+                this.selectGame();
               }
-              
-              this.games.push({ text: element.text, id: element.id });
             }
           }
         })
@@ -259,9 +283,19 @@ export default {
       // /v10/homepages 获取全部首页
       service.get(`/v10/homepages?fine_auth_token=${this.token}`)
         .then((data) => {
+
           if (data) {
             if (data && data.length > 0) {
-              this.addTab(data[0].text, this.getHomePageSrc(data[0].pcHomePage), data[0].pcHomePage);
+              const item = data[0];
+              let src = '';
+              // cpt，frm报表的路径不同
+              if (item.pcHomePage.lastIndexOf('.cpt') === item.pcHomePage.length - 4) {
+                src = `${this.baseapi}/view/report?viewlet=${encodeURIComponent(item.pcHomePage)}`
+              // } else if (item.pcHomePage.lastIndexOf('.frm') === item.pcHomePage.length - 4) {
+              }else {
+                src = this.getHomePageSrc(item.pcHomePage);
+              }
+              this.addTab(item.pcHomePageText, src, item.pcHomePage);
             }
           }
         })
@@ -275,10 +309,6 @@ export default {
 
 <style lang='less' scoped>
 @mc: #4a488e;
-@top-bar: #8491c3;
-@top-mc: #7361b3;
-@top-mc-active: #5b6896;
-
 
 .main-container {
   display: block;
@@ -291,7 +321,9 @@ export default {
       line-height: 40px;
       height: 40px;
       width: 100%;
-      background-color: @top-bar;
+      // background-color: lighten(@mc, 30%);
+      background-color: #FFFFFF;
+      padding: 5px 20px;
       &::after {
         float: clear;
       }
@@ -300,8 +332,21 @@ export default {
         width: 220px;
         font-weight: 600;
         font-size: 18px;
-        color: #FFF;
+        color: @mc;
         text-align: left;
+        .text {
+          display: inline-block;
+          vertical-align: middle;
+        }
+        .logo {
+          width: 20px;
+          height: 20px;
+          display: inline-block;
+          vertical-align: middle;
+          // background-color: @mc;
+          background-image: url('../../../static/logo.png');
+          background-size: 100% 100%;
+        }
       }
       .modules {
         float: left;
@@ -311,7 +356,7 @@ export default {
           height: calc(100% + 17px);
           .el-scrollbar__view{
             white-space: nowrap;
-            text-align: left;
+            text-align: center;
           }
         }
         .module{
@@ -323,13 +368,17 @@ export default {
           padding: 0 20px;
           border-radius: 0;
           margin-left: 0px;
-          border-right: 1px solid #ababab;
-          background-color: lighten(@mc, 20);
-          color: #ededed;
+          // border-right: 1px solid #ababab;
+          // background-color: lighten(@mc, 20);
+          // color: #ededed;
+          color: lighten(@mc, 25%);
           cursor: pointer;
+          transition: all 0.3s;
           &.active {
-            background-color: lighten(@mc, 10%);
-            color: #FFF;
+            // background-color: lighten(@mc, 10%);
+            color: @mc;
+            font-size: 16px;
+            font-weight: bold;
           }
           &::after {
             clear: both;
@@ -339,35 +388,69 @@ export default {
       .right {
         float: left;
         width: 300px;
+        position: relative;
         /deep/.el-select {
+          float: left;
           width: 140px;
+          line-height: 30px;
+          margin-top: 5px;
           .el-input {
+            border: 1px solid #bcbcbc;
+            border-radius: 4px;
+            padding: 0;
+            height: 30px;
             .el-input__inner {
+              height: 28px;
+              line-height: 28px;
               background-color: #FFFFFF;
+              color: @mc;
               border: none;
-              border-radius: 0;
+              border-radius: 4px;
+              position: absolute;
+              left: 30px;
+              padding-left: 0;
+              top: 0;
+              padding-top: 0;
+              margin-top: 0;
+              width: calc(100% - 32px);
             }
             .el-input__suffix {
               .el-select__caret {
                 color: #333;
+                line-height: 28px;
               }
             }
           }
         }
         /deep/.el-dropdown {
-          width: 140px;
+          float: left;
+          width: 150px;
           margin-left: 10px;
+          .el-dropdown-link {
+            color: @mc;
+          }
+        }
+        .gameicon {
+          background-size: 100% 100%;
+          height: 18px;
+          width: 18px;
+          position: absolute;
+          left: 10px;
+          top: 11px;
+          border-radius: 4px;
+          display: inline-block;
         }
       }
     }
     
     .el-aside {
-      background-color: #f2f4f7;
-      color: #333;
+      background-color: @mc;
+      color: #EDEDED;
       text-align: center;
       height: 100%;
       /deep/.el-tree {
-        background-color: #f2f4f7;
+        background-color: @mc;
+        color: #ededed;
         .el-tree-node__content {
           height: 40px;
           &:hover {
@@ -382,8 +465,8 @@ export default {
           }
         }
         .el-tree-node:focus > .el-tree-node__content {
-          color: #FFF;
-          background-color: lighten(@mc, 10%);
+          color: @mc;
+          background-color: #ffffff;
         }
       }
     }
@@ -439,15 +522,28 @@ export default {
         color: @mc;
       }
       .icon {
-        background-image: url('~/static/gamesicon/qiuqiu.png');
+        // background-image: url('../../../static/gamesicon/qiuqiu.png');
         background-size: 100% 100%;
-        border-radius: 6px;
-        width: 24px;
-        height: 24px;
+        border-radius: 4px;
+        width: 18px;
+        height: 18px;
         display: inline-block;
         vertical-align: middle;
         margin-right: 2px;
       }
+      .text {
+        vertical-align: top;
+        display: inline-block;
+        line-height: 34px;
+      }
+    }
+  }
+}
+.el-dropdown-menu {
+  .el-dropdown-menu__item {
+    &:hover {
+      background-color: lighten(@mc, 50%);
+      color: @mc;
     }
   }
 }

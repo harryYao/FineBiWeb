@@ -3,8 +3,10 @@
     <div class="login-box">
       <div class="left">
         <div class="left-inner">
-          <div class="logo"></div>
-          <div class="title">巨人商业智能</div>
+          <div class="title">
+            <span class="logo"></span>
+            <span class="text">球球智能报表</span>
+          </div>
         </div>
       </div>
       <div class="right">
@@ -95,6 +97,8 @@ export default {
 </script>
 
 <style lang='less' scoped>
+@mc: #4a488e;
+
 .login-container {
   position: absolute;
   left: 0;
@@ -127,17 +131,25 @@ export default {
         top: 0px;
         bottom: 0px;
         position: absolute;
-        background-color: rgba(79, 88, 105, 0.6);
-        .logo {
-          margin: 120px auto 30px;
-          height: 30px;
-          width: 100%;
-        }
+        background-color: rgba(40, 27, 63, 0.6);
         .title {
           text-align: center;
           font-size: 22px;
           font-weight: 600;
           color: #FFF;
+          margin-top: 175px;
+          .text {
+            display: inline-block;
+            vertical-align: middle;
+          }
+          .logo {
+            width: 28px;
+            height: 28px;
+            display: inline-block;
+            vertical-align: middle;
+            background-image: url('../../../static/logo.png');
+            background-size: 100% 100%;
+          }
         }
       }
     }
@@ -155,7 +167,7 @@ export default {
           border-bottom: 1px solid #e8eaed;
           .icon {
             font-size: 16px;
-            color: #3685F2;
+            color: @mc;
           }
           input {
             margin-left: 10px;
@@ -184,13 +196,13 @@ export default {
           height: 40px;
           line-height: 40px;
           border-radius: 20px;
-          background-color: rgb(54, 133, 242);
+          background-color: @mc;
           text-align: center;
           color: #FFF;
           transition: all 0.3s;
           outline: none;
           &:hover {
-            background-color: rgba(54, 133, 242, 0.9);
+            background-color: lighten(@mc, 10%);
           }
         }
       }

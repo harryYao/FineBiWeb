@@ -27,14 +27,17 @@ service.interceptors.request.use(config => {
 service.interceptors.response.use(
   // response => response.data,
   response => {
-    console.log('response' , response);
+    // console.log('response' , response);
     const res = response.data;
     if (res.data) {
+      // console.log('success')
       return res.data;
     } else if (res.errorCode){
-      this.$message.error(res.errorMsg);
+      // console.log('error')
+      // this.$message.error(res.errorMsg);
       return res;
     } else {
+      // console.log('else')
       return res;
     }
   }, function(error) {
