@@ -17,6 +17,9 @@ const store = new Vuex.Store({
     },
     setUserName(state, n) {
       state.username = n;
+    },
+    setKeepName(state, v) {
+      state.keepname = v;
     }
   },
   getters: {
@@ -25,6 +28,9 @@ const store = new Vuex.Store({
     },
     username: (state) => {
       return state.username
+    },
+    keepname: (state) => {
+      return state.keepname;
     }
   },
   plugins: [persistedState()]

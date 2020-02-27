@@ -24,6 +24,10 @@
           </div>
         </div>
         <div class="item">
+          <el-checkbox v-model="keepname" class="keepname">记住用户名</el-checkbox>
+          <el-checkbox v-model="checked">保持登录状态</el-checkbox>
+        </div>
+        <div class="item">
           <button class="btn-commit" @click="login">登录</button>
         </div>
       </div>
@@ -40,7 +44,9 @@ export default {
       test: '登陆页面',
       username: '',
       password: '',
-      token: ''
+      token: '',
+      checked: true,
+      keepname: true
     };
   },
   created() {
@@ -49,6 +55,10 @@ export default {
   computed: {
   },
   mounted () {
+    this.keepname = this.$store.state.keepname;
+    if (this.$store.state.keepname) {
+      this.username = this.$store.state.username;
+    }
   },
   methods: {
     check() {
@@ -75,6 +85,7 @@ export default {
             this.token = data.accessToken;
             this.$store.commit('setToken', data.accessToken);
             this.$store.commit('setUserName', data.username);
+            this.$store.commit('setKeepName', this.keepname);
             this.$router.push('/')
           } else if(data.errorCode){
             if (data.errorCode === '22400002') {
@@ -97,7 +108,7 @@ export default {
 </script>
 
 <style lang='less' scoped>
-@mc: #4a488e;
+@mainColor: #5D89FE;
 
 .login-container {
   position: absolute;
@@ -131,7 +142,7 @@ export default {
         top: 0px;
         bottom: 0px;
         position: absolute;
-        background-color: rgba(40, 27, 63, 0.6);
+        background-color: rgba(43, 46, 44, 0.7);
         .title {
           text-align: center;
           font-size: 22px;
@@ -147,7 +158,7 @@ export default {
             height: 28px;
             display: inline-block;
             vertical-align: middle;
-            background-image: url('../../../static/logo.png');
+            background-image: url('../../../static/logo_w.png');
             background-size: 100% 100%;
           }
         }
@@ -159,15 +170,15 @@ export default {
       top:0;
       right: 0;
       bottom: 0;
-      padding-top: 40px;
+      padding-top: 36px;
       .item {
-        margin: 30px;
+        padding: 15px 30px;
         .input-item {
           padding: 10px 5px;
           border-bottom: 1px solid #e8eaed;
           .icon {
             font-size: 16px;
-            color: @mc;
+            color: @mainColor;
           }
           input {
             margin-left: 10px;
@@ -189,20 +200,42 @@ export default {
             }
           }
         }
+        /deep/.el-checkbox.is-checked {
+          .el-checkbox__input.is-checked,.el-checkbox__input.is-focus {
+            .el-checkbox__inner {
+              background-color: @mainColor;
+              border-color: @mainColor;
+            }
+          }
+        }
+        /deep/.el-checkbox .el-checkbox__input.is-focus .el-checkbox__inner {
+          border-color: @mainColor;
+        }
+        /deep/.el-checkbox.is-checked {
+          .el-checkbox__label {
+            color: @mainColor;
+          }
+        }
+        /deep/.el-checkbox__inner:hover {
+          border-color: @mainColor;
+        }
+        .keepname {
+          margin-bottom: 10px;
+        }
         .btn-commit {
-          margin-top: 40px;
+          margin-top: 10px;
           cursor: pointer;
           width: 100%;
           height: 40px;
           line-height: 40px;
           border-radius: 20px;
-          background-color: @mc;
+          background-color: @mainColor;
           text-align: center;
           color: #FFF;
           transition: all 0.3s;
           outline: none;
           &:hover {
-            background-color: lighten(@mc, 10%);
+            background-color: lighten(@mainColor, 10%);
           }
         }
       }

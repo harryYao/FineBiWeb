@@ -35,11 +35,13 @@
           </el-dropdown>
         </div>
       </el-header>
-      <el-container>
+      <el-container class="down-container">
         <el-aside width="240px">
-          <div v-if="treeData">
+          <!-- <div v-if="treeData" style="height:100%;"> -->
+            <el-scrollbar v-if="treeData">
             <el-tree :data="treeData" node-key="id" :current-node-key="currentnode" :props="defaultProps" @node-click="handleNodeClick" @node-expand="handleNodeExpand"></el-tree>
-          </div>
+            </el-scrollbar>
+          <!-- </div> -->
         </el-aside>
         <el-main>
           <!-- <iframe :src="curUrl" width="100%" height="100%" frameborder="0"></iframe> -->
@@ -51,7 +53,9 @@
               :name="item.name"
               :closable="index > 0"
             >
-              <iframe :id="`iframe_${item.name}`" :src="item.url" width="100%" height="100%" frameborder="0"></iframe>
+              <div class="container" v-loading="item.loading" style="width:100%;height:100%;">
+                <iframe :id="`iframe_${item.name}`" :src="item.url" width="100%" height="100%" frameborder="0" @load="item.loading = false"></iframe>
+              </div>
             </el-tab-pane>
           </el-tabs>
           <div class="tabs-remove">
@@ -120,6 +124,7 @@ export default {
   mounted () {
   },
   methods: {
+    // 添加tab页面
     addTab(text, url, id) {
       const item = this.editableTabs.find((item) => {
         return item.name === id
@@ -129,11 +134,13 @@ export default {
         this.editableTabs.push({
           title: text,
           name: id,
-          url: url
+          url: url,
+          loading: true
         });
       }
       this.editableTabsValue = id;
     },
+    // iframe刷新定时器
     addInterval(id) {
       if (this.refreshList.includes(id)) {
         const timer = setInterval(function() {
@@ -143,6 +150,7 @@ export default {
         this.timeList.push(timer);
       }
     },
+    // 关闭页面
     removeTab(targetName) {
       console.log(targetName);
       let tabs = this.editableTabs;
@@ -161,6 +169,7 @@ export default {
       this.editableTabsValue = activeName;
       this.editableTabs = tabs.filter(tab => tab.name !== targetName);
     },
+    // 选择游戏
     selectGame() {
       this.game = this.result.find((item) => {
         return item.id === this.gameid
@@ -171,18 +180,21 @@ export default {
         this.treeData = this.game.children[0].children;
       }
     },
+    // 获取地址
     getIFrameSrc(id) {
       if (id) {
         return `${this.baseapi}/v10/entry/access/${id}?dashboardType=5`;
       }
       return '';
     },
+    // 获取地址
     getHomePageSrc(id) {
       // `/webroot/decision/v10/entry/access/09d9715a-0e10-4ea4-98c7-7ebabae571f7?dashboardType=5`
       // `http://bi.battleofballs.com`
       // `/webroot/decision/v10/enter/access/09d9715a-0e10-4ea4-98c7-7ebabae571f7?dashboardType=5`
       return `${this.baseapi}/v10/entry/access/${id}?dashboardType=5`;
     },
+    // 选择模块
     chooseModule(item) {
       this.activeId = item.id
       this.treeData = item.children;
@@ -194,6 +206,7 @@ export default {
         this.refreshpid = item.id;
       }
     },
+    // 选择节点
     handleNodeClick(data) {
       console.log('handleNodeClick:' + data.text);
       if (data.isParent) {
@@ -207,12 +220,14 @@ export default {
       this.currentReport = data;
       this.addTab(data.text, this.getIFrameSrc(data.id), data.id)
     },
+    // 树节点打开
     handleNodeExpand(node) {
       console.log('handleNodeExpand:' + node.text)
       if (node.text === '实时监控') {
         this.refreshpid = node.id;
       }
     },
+    // 登出
     handleCommand(command) {
       if (command === 'logout') {
         this.logout();
@@ -237,6 +252,7 @@ export default {
         this.$router.push('/login')
       })
     },
+    // 获取需要刷新iframe列表
     getTheRefreshPId(item) {
       if (item.pId === this.refreshpid) {
         console.log('add a refresh iframe:' + item.id)
@@ -245,12 +261,14 @@ export default {
         }
       }
     },
+    // 配置一级菜单图标
     getGameIcon(name) {
       const list = {
         '球球大作战': 'qiuqiu.png'
       }
       return list[name] ? list[name] : 'default.png';
     },
+    // 查询全部菜单
     getMenuList() {
       // '/v10/{directoryId}/entries/{privilegeType}'
       // service.get(`/v10/decision-directory-root/entries?fine_auth_token=${this.token}`)
@@ -265,7 +283,7 @@ export default {
             for (let index = 0; index < this.result.length; index++) {
               const element = this.result[index];
               // this.games.push({ text: element.text, id: element.id });
-
+              // 目前只显示 球球大作战 目录
               if (element.text === '球球大作战') {
                 this.games.push({ text: element.text, id: element.id });
                 this.gameid = element.id;
@@ -278,6 +296,7 @@ export default {
           console.error(error);
         });
     },
+    // 查询首页
     getHomePage() {
       // /v10/homepages{privilegeType} 取具有特定权限的首页 权限类型 1:查看 2:授权 3:编辑
       // /v10/homepages 获取全部首页
@@ -308,7 +327,10 @@ export default {
 </script>
 
 <style lang='less' scoped>
-@mc: #4a488e;
+@mainfont: #5D6284;
+@mainColor: #5D89FE;
+@bgwhite: #F7F8FF;
+
 
 .main-container {
   display: block;
@@ -318,10 +340,9 @@ export default {
     .el-header {
       color: #333;
       text-align: center;
-      line-height: 40px;
-      height: 40px;
+      line-height: 50px;
+      height: 50px;
       width: 100%;
-      // background-color: lighten(@mc, 30%);
       background-color: #FFFFFF;
       padding: 5px 20px;
       &::after {
@@ -332,8 +353,10 @@ export default {
         width: 220px;
         font-weight: 600;
         font-size: 18px;
-        color: @mc;
+        color: @mainfont;
         text-align: left;
+        height: 40px;
+        line-height: 40px;
         .text {
           display: inline-block;
           vertical-align: middle;
@@ -343,8 +366,7 @@ export default {
           height: 20px;
           display: inline-block;
           vertical-align: middle;
-          // background-color: @mc;
-          background-image: url('../../../static/logo.png');
+          background-image: url('../../../static/logo_g.png');
           background-size: 100% 100%;
         }
       }
@@ -357,10 +379,11 @@ export default {
           .el-scrollbar__view{
             white-space: nowrap;
             text-align: center;
+            height: 40px;
+            line-height: 40px;
           }
         }
         .module{
-          // float: left;
           display: inline-block;
           height: 40px;
           border: none;
@@ -368,15 +391,11 @@ export default {
           padding: 0 20px;
           border-radius: 0;
           margin-left: 0px;
-          // border-right: 1px solid #ababab;
-          // background-color: lighten(@mc, 20);
-          // color: #ededed;
-          color: lighten(@mc, 25%);
+          color: fade(@mainfont, 65%);
           cursor: pointer;
           transition: all 0.3s;
           &.active {
-            // background-color: lighten(@mc, 10%);
-            color: @mc;
+            color: @mainColor;
             font-size: 16px;
             font-weight: bold;
           }
@@ -395,7 +414,7 @@ export default {
           line-height: 30px;
           margin-top: 5px;
           .el-input {
-            border: 1px solid #bcbcbc;
+            border: 1px solid fade(@mainfont, 15%);
             border-radius: 4px;
             padding: 0;
             height: 30px;
@@ -403,7 +422,7 @@ export default {
               height: 28px;
               line-height: 28px;
               background-color: #FFFFFF;
-              color: @mc;
+              color: @mainfont;
               border: none;
               border-radius: 4px;
               position: absolute;
@@ -426,8 +445,10 @@ export default {
           float: left;
           width: 150px;
           margin-left: 10px;
+          height: 40px;
+          line-height: 40px;
           .el-dropdown-link {
-            color: @mc;
+            color: @mainfont;
           }
         }
         .gameicon {
@@ -442,30 +463,41 @@ export default {
         }
       }
     }
-    
+    .down-container {
+      height: calc(100% - 50px);
+    }
     .el-aside {
-      background-color: @mc;
+      background-color: @bgwhite;
       color: #EDEDED;
       text-align: center;
       height: 100%;
+      padding-bottom: 30px;
+      &::-webkit-scrollbar {
+        width: 0;
+      }
+      /deep/.el-scrollbar__bar.is-vertical {
+        background-color: fade(#ababab, 20%);
+      }
       /deep/.el-tree {
-        background-color: @mc;
-        color: #ededed;
+        background-color: @bgwhite;
+        color: @mainfont;
         .el-tree-node__content {
           height: 40px;
           &:hover {
-            color: #FFF;
-            background-color: lighten(@mc, 20%);
+            color: fade(@mainColor, 80%);
+            background-color: #FFFFFF;
           }
         }
         .el-tree-node.is-current {
-          .el-tree-node__content {
-            // color: #FFF;
-            // background-color: @mc;
+          > .el-tree-node__content {
+            color: @mainColor;
+            background-color: #FFFFFF;
+            font-weight: bold;
+            border-left: 4px solid;
           }
         }
         .el-tree-node:focus > .el-tree-node__content {
-          color: @mc;
+          color: @mainColor;
           background-color: #ffffff;
         }
       }
@@ -487,7 +519,7 @@ export default {
             line-height: 30px;
             font-size: 12px;
             &:hover {
-              color: lighten(@mc, 10%);
+              color: lighten(@mainColor, 10%);
             }
             .el-icon-close {
               text-align: center;
@@ -497,14 +529,14 @@ export default {
             }
           }
           .el-tabs__item.is-active {
-            border-bottom: 1px solid @mc;
-            color: @mc;
+            border-bottom: 1px solid @mainColor;
+            color: @mainColor;
             font-weight: bold;
             background-color: #FFF;
           }
         }
         .el-tabs__content {
-          height: calc(100% - 41px) !important;
+          height: calc(100% - 50px) !important;
           .el-tab-pane {
             height: 100%;
           }
@@ -519,7 +551,7 @@ export default {
     .el-select-dropdown__item {
       padding: 0 12px;
       &.selected {
-        color: @mc;
+        color: @mainColor;
       }
       .icon {
         // background-image: url('../../../static/gamesicon/qiuqiu.png');
@@ -542,8 +574,8 @@ export default {
 .el-dropdown-menu {
   .el-dropdown-menu__item {
     &:hover {
-      background-color: lighten(@mc, 50%);
-      color: @mc;
+      background-color: lighten(@mainColor, 50%);
+      color: @mainColor;
     }
   }
 }
