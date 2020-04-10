@@ -9,7 +9,7 @@
         <div class="modules">
           <template v-if="game">
             <el-scrollbar>
-            <div class="module" :class="{ active: activeId === item.id}" v-for="item in game.children" :key="item.id" @click="chooseModule(item)">{{ item.text }}</div>
+            <div class="module" :class="{ active: activeId === item.id, waiting: item.text == '专题' }" v-for="item in game.children" :key="item.id" @click="chooseModule(item)">{{ item.text }}</div>
             </el-scrollbar>
           </template>
         </div>
@@ -104,7 +104,8 @@ export default {
       editableTabsValue: 'home',
       refreshpid: '',
       refreshList: [],
-      timeList: []
+      timeList: [],
+      timer: null
     };
   },
   created() {
@@ -122,8 +123,27 @@ export default {
     }
   },
   mounted () {
+    if (!this.timer) {
+      this.timer = setInterval(() => {
+        this.checkToken();
+      }, 30000);
+    }
   },
   methods: {
+    async checkToken() {
+      let rst = await service.get(`/v10/homepages?fine_auth_token=${this.token}`);
+      if (rst && rst.includes('<!DOCTYPE html>')) {
+        clearInterval(this.timer);
+        this.$alert('请重新登录！', '登录会话已经失效', {
+          confirmButtonText: '确定',
+          callback: action => {
+            this.logout();
+          }
+        });
+      } else {
+        // console.log('ok 没问题！');
+      }
+    },
     // 添加tab页面
     addTab(text, url, id) {
       const item = this.editableTabs.find((item) => {
@@ -142,17 +162,15 @@ export default {
     },
     // iframe刷新定时器
     addInterval(id) {
-      if (this.refreshList.includes(id)) {
-        const timer = setInterval(function() {
-          console.log('refresh iframe :', id)
-          document.getElementById(`iframe_${id}`).contentWindow.location.reload(true);
-        }, 5*60*1000)
-        this.timeList.push(timer);
-      }
+      // if (this.refreshList.includes(id)) {
+      //   const timer = setInterval(function() {
+      //     document.getElementById(`iframe_${id}`).contentWindow.location.reload(true);
+      //   }, 5*60*1000)
+      //   this.timeList.push(timer);
+      // }
     },
     // 关闭页面
     removeTab(targetName) {
-      console.log(targetName);
       let tabs = this.editableTabs;
       let activeName = this.editableTabsValue;
       if (activeName === targetName) {
@@ -174,7 +192,7 @@ export default {
       this.game = this.result.find((item) => {
         return item.id === this.gameid
       })
-      this.getTheRefreshPId(this.game);
+      // this.getTheRefreshPId(this.game);
       if (this.game.children && this.game.children.length > 0) {
         this.activeId = this.game.children[0].id
         this.treeData = this.game.children[0].children;
@@ -208,7 +226,6 @@ export default {
     },
     // 选择节点
     handleNodeClick(data) {
-      console.log('handleNodeClick:' + data.text);
       if (data.isParent) {
         if (data.text === '实时监控') {
           this.refreshpid = data.id;
@@ -216,13 +233,12 @@ export default {
         return;
       }
       
-      this.getTheRefreshPId(data);
+      // this.getTheRefreshPId(data);
       this.currentReport = data;
       this.addTab(data.text, this.getIFrameSrc(data.id), data.id)
     },
     // 树节点打开
     handleNodeExpand(node) {
-      console.log('handleNodeExpand:' + node.text)
       if (node.text === '实时监控') {
         this.refreshpid = node.id;
       }
@@ -230,6 +246,7 @@ export default {
     // 登出
     handleCommand(command) {
       if (command === 'logout') {
+        clearInterval(this.timer);
         this.logout();
       }
     },
@@ -254,12 +271,12 @@ export default {
     },
     // 获取需要刷新iframe列表
     getTheRefreshPId(item) {
-      if (item.pId === this.refreshpid) {
-        console.log('add a refresh iframe:' + item.id)
-        if (!this.refreshList.includes(item.id)) {
-          this.refreshList.push(item.id);
-        }
-      }
+      // if (item.pId === this.refreshpid) {
+      //   console.log('add a refresh iframe:' + item.id)
+      //   if (!this.refreshList.includes(item.id)) {
+      //     this.refreshList.push(item.id);
+      //   }
+      // }
     },
     // 配置一级菜单图标
     getGameIcon(name) {
@@ -385,6 +402,7 @@ export default {
         }
         .module{
           display: inline-block;
+          position: relative;
           height: 40px;
           border: none;
           line-height: 40px;
@@ -398,6 +416,20 @@ export default {
             color: @mainColor;
             font-size: 16px;
             font-weight: bold;
+          }
+          &.waiting::before {
+            content: "敬请期待";
+            position: absolute;
+            top: -6px;
+            right: -24px;
+            font-size: 14px;
+            color: #ffffff;
+            transform: scale(0.6);
+            border: 1px solid;
+            border-radius: 14px;
+            line-height: 1.8;
+            padding: 0 4px;
+            background: #d04d4d;
           }
           &::after {
             clear: both;

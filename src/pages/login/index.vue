@@ -25,7 +25,7 @@
         </div>
         <div class="item">
           <el-checkbox v-model="keepname" class="keepname">记住用户名</el-checkbox>
-          <el-checkbox v-model="checked">保持登录状态</el-checkbox>
+          <!-- <el-checkbox v-model="checked">保持登录状态</el-checkbox> -->
         </div>
         <div class="item">
           <button class="btn-commit" @click="login">登录</button>
@@ -55,7 +55,8 @@ export default {
   computed: {
   },
   mounted () {
-    this.keepname = this.$store.state.keepname;
+    // console.log('this.$store.state.keepname', this.$store.state.keepname);
+    this.keepname = this.$store.state.keepname || (this.$store.state.keepname === undefined);
     if (this.$store.state.keepname) {
       this.username = this.$store.state.username;
     }
