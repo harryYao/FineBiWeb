@@ -53,7 +53,8 @@
               :name="item.name"
               :closable="index > 0"
             >
-              <div class="container" v-loading="item.loading" style="width:100%;height:100%;">
+              <!-- <div class="container" v-loading="item.loading" style="width:100%;height:100%;"> -->
+              <div class="container" style="width:100%;height:100%;">
                 <iframe :id="`iframe_${item.name}`" :src="item.url" width="100%" height="100%" frameborder="0" @load="item.loading = false"></iframe>
               </div>
             </el-tab-pane>
@@ -267,6 +268,7 @@ export default {
       jsonp(url).then((data) => {
         this.$store.commit('setToken', '');
         this.$router.push('/login')
+        clearInterval(this.timer);
       })
     },
     // 获取需要刷新iframe列表
@@ -568,7 +570,7 @@ export default {
           }
         }
         .el-tabs__content {
-          height: calc(100% - 50px) !important;
+          height: calc(100% - 30px) !important;
           .el-tab-pane {
             height: 100%;
           }

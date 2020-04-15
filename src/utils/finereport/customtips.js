@@ -1,8 +1,13 @@
 /**
+ * 注意注意：每行都要加分号！！！
+ */
+
+/**
  * 折线图的提示，自定义显示方式
  */
 function() {
   var points = this.points;/*获取当前分类下所有点*/
+  console.log(points)
   var format = function (num) {  
     var reg=/\d{1,3}(?=(\d{3})+$)/g;   
     return (num + '').replace(reg, '$&,');  
@@ -54,6 +59,28 @@ function() {
       valuestr = format(element.value);
     }
     htmlstr += '<p style="padding-left: 6px;">' + spanstr1 + element.color + spanstr2+ element.seriesName + ': ' + valuestr + '</P>';
+  }
+  htmlstr += '</div>';
+  return htmlstr;
+}
+
+
+function() {
+  var points = this.points;/*获取当前分类下所有点*/
+  console.log(points);
+  var validPoints = points.filter(function(p) {
+    return p.series.visible && p.visible && !p.isNull;/*获取当前分类下的有效点*/
+  });
+
+  var htmlstr = '<div>';
+  var spanstr1 = '<span style="background-color:';
+  var spanstr2 = ';border-radius:50%;width:8px;height:8px;display:inline-block;margin-right:6px;"></span>';
+  var categorys = validPoints[0].categoryArray;
+  var category_str = categorys.join(' ');
+  htmlstr += '<p>' + categorys.join(' ') + '</p>';
+  for (let index = 0; index < validPoints.length; index++) {
+    var element = validPoints[index];
+    htmlstr += '<p style="padding-left: 6px;">' + spanstr1 + element.color + spanstr2 + element.seriesName + ': ' + element.value + '</P>';
   }
   htmlstr += '</div>';
   return htmlstr;
