@@ -4,6 +4,7 @@ import IndexPage from '@/pages/index/index'
 import ApiTestPage from '@/pages/apitest/index'
 import LoginPage from '@/pages/login/index'
 import InterfacePage from '@/pages/interface/interface'
+import FeedbackQuery from '@/pages/feedbackquery/index'
 
 Vue.use(Router)
 
@@ -30,6 +31,11 @@ let router = new Router({
       path: '/interface',
       name: 'InterfacePage',
       component: InterfacePage
+    },
+    {
+      path: '/feedbackquery',
+      name: 'FeedbackQuery',
+      component: FeedbackQuery
     }
   ]
 })

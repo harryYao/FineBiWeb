@@ -87,7 +87,11 @@ export default {
             this.$store.commit('setToken', data.accessToken);
             this.$store.commit('setUserName', data.username);
             this.$store.commit('setKeepName', this.keepname);
-            this.$router.push('/')
+            if (this.$route.query && this.$route.query.page) {
+              this.$router.replace(`/?page=${this.$route.query.page}&title=${this.$route.query.title}`);
+            } else {
+              this.$router.push('/');
+            }
           } else if(data.errorCode){
             if (data.errorCode === '22400002') {
               this.$message.error('用户不存在！')

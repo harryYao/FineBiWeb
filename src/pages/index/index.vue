@@ -45,7 +45,7 @@
         </el-aside>
         <el-main>
           <!-- <iframe :src="curUrl" width="100%" height="100%" frameborder="0"></iframe> -->
-          <el-tabs v-model="editableTabsValue" type="card" @tab-remove="removeTab">
+          <el-tabs v-model="editableTabsValue" type="card" @tab-click="tabClick" @tab-remove="removeTab">
             <el-tab-pane
               v-for="(item, index) in editableTabs"
               :key="item.name"
@@ -53,9 +53,22 @@
               :name="item.name"
               :closable="index > 0"
             >
+              <span slot="label">
+                <el-popover
+                  placement="bottom"
+                  width="80"
+                  trigger="hover"
+                  :popper-class="'tab-refresh'"
+                  :open-delay="500"
+                  :disabled="editableTabsValue != item.name"
+                >
+                  <span @click="refreshIframe(item)">刷新</span>
+                  <el-button class="tabtitle" slot="reference" ><i class="el-icon-s-home" v-if="index == 0"></i>{{ item.title }}</el-button>
+                </el-popover>
+              </span>
               <!-- <div class="container" v-loading="item.loading" style="width:100%;height:100%;"> -->
               <div class="container" style="width:100%;height:100%;">
-                <iframe :id="`iframe_${item.name}`" :src="item.url" width="100%" height="100%" frameborder="0" @load="item.loading = false"></iframe>
+                <iframe :name="`iframe_${item.name}`" :id="`iframe_${item.name}`" :src="item.url" width="100%" height="100%" frameborder="0" @load="item.loading = false"></iframe>
               </div>
             </el-tab-pane>
           </el-tabs>
@@ -104,13 +117,17 @@ export default {
       editableTabs: [],
       editableTabsValue: 'home',
       refreshpid: '',
-      refreshList: [],
       timeList: [],
       timer: null
     };
   },
   created() {
     if (!this.token) {
+      // if (this.$route.query.page) {
+      //   this.$router.replace(`/login?page=${this.$route.query.page}&title=${this.$route.query.title}`);
+      // } else {
+      //   this.$router.replace('/login');
+      // }
       this.$router.replace('/login');
     }
     this.getMenuList();
@@ -124,11 +141,6 @@ export default {
     }
   },
   mounted () {
-    if (!this.timer) {
-      this.timer = setInterval(() => {
-        this.checkToken();
-      }, 30000);
-    }
   },
   methods: {
     async checkToken() {
@@ -150,7 +162,6 @@ export default {
       const item = this.editableTabs.find((item) => {
         return item.name === id
       })
-      this.addInterval(id);
       if (!item) {
         this.editableTabs.push({
           title: text,
@@ -159,16 +170,15 @@ export default {
           loading: true
         });
       }
+      // this.$router.replace(`/?page=${id}&title=${text}`);
       this.editableTabsValue = id;
     },
-    // iframe刷新定时器
-    addInterval(id) {
-      // if (this.refreshList.includes(id)) {
-      //   const timer = setInterval(function() {
-      //     document.getElementById(`iframe_${id}`).contentWindow.location.reload(true);
-      //   }, 5*60*1000)
-      //   this.timeList.push(timer);
-      // }
+    tabClick(e) {
+      const element = e.$options.propsData;
+      // this.$router.replace(`/?page=${element.name}&title=${element.label}`);
+    },
+    refreshIframe(item) {
+      document.getElementById(`iframe_${item.name}`).contentWindow.location.reload(true);
     },
     // 关闭页面
     removeTab(targetName) {
@@ -193,7 +203,6 @@ export default {
       this.game = this.result.find((item) => {
         return item.id === this.gameid
       })
-      // this.getTheRefreshPId(this.game);
       if (this.game.children && this.game.children.length > 0) {
         this.activeId = this.game.children[0].id
         this.treeData = this.game.children[0].children;
@@ -220,7 +229,6 @@ export default {
       if (!item.isParent) {
         this.currentReport = item;
       }
-      // this.addTab(item.text, this.getIFrameSrc(item.id), item.id)
       if (item.text === '实时监控') {
         this.refreshpid = item.id;
       }
@@ -234,7 +242,6 @@ export default {
         return;
       }
       
-      // this.getTheRefreshPId(data);
       this.currentReport = data;
       this.addTab(data.text, this.getIFrameSrc(data.id), data.id)
     },
@@ -271,19 +278,11 @@ export default {
         clearInterval(this.timer);
       })
     },
-    // 获取需要刷新iframe列表
-    getTheRefreshPId(item) {
-      // if (item.pId === this.refreshpid) {
-      //   console.log('add a refresh iframe:' + item.id)
-      //   if (!this.refreshList.includes(item.id)) {
-      //     this.refreshList.push(item.id);
-      //   }
-      // }
-    },
     // 配置一级菜单图标
     getGameIcon(name) {
       const list = {
-        '球球大作战': 'qiuqiu.png'
+        '球球大作战': 'qiuqiu.png',
+        '嘿嘿语音': 'heyhey.png'
       }
       return list[name] ? list[name] : 'default.png';
     },
@@ -303,10 +302,13 @@ export default {
               const element = this.result[index];
               // this.games.push({ text: element.text, id: element.id });
               // 目前只显示 球球大作战 目录
-              if (element.text === '球球大作战') {
+              if (element.text === '球球大作战' ) {
                 this.games.push({ text: element.text, id: element.id });
                 this.gameid = element.id;
                 this.selectGame();
+              }
+              if (element.text === '嘿嘿语音' ) {
+                this.games.push({ text: element.text, id: element.id });
               }
             }
           }
@@ -333,23 +335,53 @@ export default {
               }else {
                 src = this.getHomePageSrc(item.pcHomePage);
               }
+              let page = '';
+              let title = '';
+              if (this.$route.query && this.$route.query.page) {
+                page = this.$route.query.page;
+                title = this.$route.query.title;
+              }
               this.addTab(item.pcHomePageText, src, item.pcHomePage);
+              page && this.addQueryPage(page, title);
+              // this.addTab('反馈查询', '/feedbackquery', 'feedbackquery');
+            } else {
+              if (this.$route.query && this.$route.query.page) {
+                this.addQueryPage(this.$route.query.page, this.$route.query.title);
+              }
+            }
+          } else {
+            if (this.$route.query && this.$route.query.page) {
+              this.addQueryPage(this.$route.query.page, this.$route.query.title);
             }
           }
         })
         .catch((error) => {
           console.error(error);
         });
+    },
+    addQueryPage(id, title) {
+      this.addTab(title || 'NEWPAGE', this.getIFrameSrc(id), id);  
     }
   }
 }
 </script>
 
+<style lang="less">
+.tab-refresh {
+  padding: 10px !important;
+  text-align: center !important;
+  cursor: pointer;
+  min-width: 80px !important;
+  &:hover {
+    color: lighten(#5D89FE, 10%);
+  }
+}
+</style>
+
 <style lang='less' scoped>
 @mainfont: #5D6284;
 @mainColor: #5D89FE;
 @bgwhite: #F7F8FF;
-
 
 .main-container {
   display: block;
@@ -552,6 +584,8 @@ export default {
             height: 30px;
             line-height: 30px;
             font-size: 12px;
+            background: #FFF;
+            border-bottom: 1px solid #E4E7ED;
             &:hover {
               color: lighten(@mainColor, 10%);
             }
@@ -559,6 +593,18 @@ export default {
               text-align: center;
               &::before {
                 transform: scale(1);
+              }
+            }
+            /deep/.el-button {
+              height: 28px;
+              line-height: 28px;
+              border: none;
+              padding: 0;
+              &:hover,&:focus, &:active {
+                background: none;
+              }
+              .el-icon-s-home {
+                margin-right: 6px;
               }
             }
           }
