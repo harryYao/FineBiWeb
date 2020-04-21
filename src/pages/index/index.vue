@@ -288,6 +288,7 @@ export default {
     },
     // 查询全部菜单
     getMenuList() {
+      console.log('getMenuList');
       // '/v10/{directoryId}/entries/{privilegeType}'
       // service.get(`/v10/decision-directory-root/entries?fine_auth_token=${this.token}`)
       service.get(`/v10/entries/all?fine_auth_token=${this.token}`)
@@ -319,6 +320,7 @@ export default {
     },
     // 查询首页
     getHomePage() {
+      console.log('getHomePage');
       // /v10/homepages{privilegeType} 取具有特定权限的首页 权限类型 1:查看 2:授权 3:编辑
       // /v10/homepages 获取全部首页
       service.get(`/v10/homepages?fine_auth_token=${this.token}`)
