@@ -9,7 +9,7 @@
         <div class="modules">
           <template v-if="game">
             <el-scrollbar>
-            <div class="module" :class="{ active: activeId === item.id, waiting: item.text == '专题' }" v-for="item in game.children" :key="item.id" @click="chooseModule(item)">{{ item.text }}</div>
+            <div class="module" :class="{ active: activeId === item.id, new: item.text == '用户之声' }" v-for="item in game.children" :key="item.id" @click="chooseModule(item)">{{ item.text }}</div>
             </el-scrollbar>
           </template>
         </div>
@@ -44,7 +44,6 @@
           <!-- </div> -->
         </el-aside>
         <el-main>
-          <!-- <iframe :src="curUrl" width="100%" height="100%" frameborder="0"></iframe> -->
           <el-tabs v-model="editableTabsValue" type="card" @tab-click="tabClick" @tab-remove="removeTab">
             <el-tab-pane
               v-for="(item, index) in editableTabs"
@@ -293,6 +292,10 @@ export default {
       // service.get(`/v10/decision-directory-root/entries?fine_auth_token=${this.token}`)
       service.get(`/v10/entries/all?fine_auth_token=${this.token}`)
         .then((data) => {
+          if (data && data.includes('<!DOCTYPE html>')) {
+            this.$store.commit('setToken', '');
+            this.$router.push('/login');
+          }
           if (data) {
             const result = jsonToTree(data, 'id', 'pId');
             const temp = result.find((item) => {
@@ -467,6 +470,20 @@ export default {
             padding: 0 4px;
             background: #d04d4d;
           }
+          &.new::before {
+            content: "NEW";
+            position: absolute;
+            top: -2px;
+            right: -6px;
+            font-size: 14px;
+            color: #ffffff;
+            transform: scale(0.6);
+            border: 1px solid;
+            border-radius: 14px;
+            line-height: 1.5;
+            padding: 0 4px;
+            background: #d04d4d;
+          }
           &::after {
             clear: both;
           }
@@ -597,7 +614,7 @@ export default {
                 transform: scale(1);
               }
             }
-            /deep/.el-button {
+            .el-button {
               height: 28px;
               line-height: 28px;
               border: none;

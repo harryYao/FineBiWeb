@@ -43,13 +43,13 @@ module.exports = {
     // Paths
     assetsRoot: path.resolve(__dirname, '../test'),
     assetsSubDirectory: 'static',
-    assetsPublicPath: '/webroot/',
+    assetsPublicPath: '/webroot/bi-test/',
 
     /**
      * Source Maps
      */
 
-    productionSourceMap: true,
+    productionSourceMap: false,
     // https://webpack.js.org/configuration/devtool/#production
     devtool: '#source-map',
 
@@ -79,7 +79,7 @@ module.exports = {
      * Source Maps
      */
 
-    productionSourceMap: true,
+    productionSourceMap: false,
     // https://webpack.js.org/configuration/devtool/#production
     devtool: '#source-map',
 

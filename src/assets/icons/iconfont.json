@@ -1,0 +1,16 @@
+{
+  "id": "1781731",
+  "name": "finebi",
+  "font_family": "iconfont",
+  "css_prefix_text": "icon",
+  "description": "finebi 项目icon",
+  "glyphs": [
+    {
+      "icon_id": "14326392",
+      "name": "Excel",
+      "font_class": "Excel",
+      "unicode": "e61c",
+      "unicode_decimal": 58908
+    }
+  ]
+}

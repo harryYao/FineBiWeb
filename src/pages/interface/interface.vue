@@ -1,5 +1,8 @@
 <template>
   <div class="interface-container">
+    <a href="http://192.168.96.85:8080/bi/#/feedbackquery?desc=球球&start=2020-04-05&end=2020-04-11&v=12.1.3&os=ios&uid=45396718&st=1" target="http://192.168.96.85:8080/bi/#/feedbackquery">球球</a>
+    <a href="http://192.168.96.85:8080/bi/#/feedbackquery?desc=充值&os=iOS" target="http://192.168.96.85:8080/bi/#/feedbackquery">充值</a>
+    <a href="http://192.168.96.85:8080/bi/#/feedbackquery?desc=小龙女&v=12.1.3" target="http://192.168.96.85:8080/bi/#/feedbackquery">小龙女</a>
     <header>
       <router-link to="/">back</router-link><h3>{{ test }}  <a href="https://yapi.fanruan.com/api/public/plugin/documents">基于文档</a></h3> 
     </header>
