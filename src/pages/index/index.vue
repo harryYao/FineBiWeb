@@ -4,7 +4,7 @@
       <el-header height="50px">
         <div class="logo-name">
           <span class="logo"></span>
-          <span class="text">球球智能报表</span>
+          <span class="text">商业智能报表</span>
         </div>
         <div class="modules">
           <template v-if="game">
@@ -58,7 +58,7 @@
                   width="80"
                   trigger="hover"
                   :popper-class="'tab-refresh'"
-                  :open-delay="500"
+                  :open-delay="600"
                   :disabled="editableTabsValue != item.name"
                 >
                   <span @click="refreshIframe(item)">刷新</span>
@@ -89,9 +89,11 @@
 
 <script>
 import { mapState } from 'vuex';
+import axios from 'axios'
 import jsonp from '../../service/jsonp'
 import service from '../../service/index'
 import { jsonToTree } from '../../utils/utils'
+import config from '../../utils/config'
 
 export default {
   name: '',
@@ -109,39 +111,37 @@ export default {
         children: 'children',
         label: 'text'
       },
-      currentReport: null,
       currentnode: '',
       result: [],
       reports: [],
       editableTabs: [],
       editableTabsValue: 'home',
-      refreshpid: '',
       timeList: [],
       timer: null
     };
   },
   created() {
     if (!this.token) {
-      // if (this.$route.query.page) {
-      //   this.$router.replace(`/login?page=${this.$route.query.page}&title=${this.$route.query.title}`);
-      // } else {
-      //   this.$router.replace('/login');
-      // }
-      this.$router.replace('/login');
+      if (this.$route.query.page) {
+        this.$router.replace(`/login?page=${this.$route.query.page}&title=${this.$route.query.title}`).catch(err => {err});
+      } else {
+        this.$router.replace('/login').catch(err => {err});
+      }
     }
+    console.log(config);
     this.getMenuList();
     this.getHomePage();
   },
   components: {},
   computed: {
-    ...mapState(['token', 'username']),
-    curUrl() {
-      return this.getIFrameSrc(this.currentReport.id);
-    }
+    ...mapState(['token', 'username'])
   },
   mounted () {
   },
   methods: {
+    /**
+     * 检测token 函数，暂时弃用
+     */
     async checkToken() {
       let rst = await service.get(`/v10/homepages?fine_auth_token=${this.token}`);
       if (rst && rst.includes('<!DOCTYPE html>')) {
@@ -156,7 +156,9 @@ export default {
         // console.log('ok 没问题！');
       }
     },
-    // 添加tab页面
+    /**
+     * 添加tab页面
+     */
     addTab(text, url, id) {
       const item = this.editableTabs.find((item) => {
         return item.name === id
@@ -169,17 +171,21 @@ export default {
           loading: true
         });
       }
-      // this.$router.replace(`/?page=${id}&title=${text}`);
+      this.$router.replace(`/?page=${id}&title=${text}`).catch(err => {err});
       this.editableTabsValue = id;
     },
+    /**
+     * tab点击事件
+     */
     tabClick(e) {
       const element = e.$options.propsData;
-      // this.$router.replace(`/?page=${element.name}&title=${element.label}`);
+      this.$router.replace(`/?page=${element.name}&title=${element.label}`).catch(err => {err});
     },
+    /** 刷新页面 */
     refreshIframe(item) {
       document.getElementById(`iframe_${item.name}`).contentWindow.location.reload(true);
     },
-    // 关闭页面
+    /** 关闭页面 */
     removeTab(targetName) {
       let tabs = this.editableTabs;
       let activeName = this.editableTabsValue;
@@ -197,24 +203,69 @@ export default {
       this.editableTabsValue = activeName;
       this.editableTabs = tabs.filter(tab => tab.name !== targetName);
     },
-    // 选择游戏
-    selectGame() {
+    /** 选择游戏（一级目录） */
+    selectGame(p, isfirst = false) {
       this.game = this.result.find((item) => {
         return item.id === this.gameid
       })
+      const default_game = config.games.find((item) => {
+        return item.name == this.game.text;
+      })
+      console.log('default_game', default_game, isfirst)
       if (this.game.children && this.game.children.length > 0) {
         this.activeId = this.game.children[0].id
         this.treeData = this.game.children[0].children;
+        if (default_game.tabs) {
+          const dd = default_game.tabs.find((item) => {
+            return item.name == this.game.children[0].text;
+          })
+          console.log('dd', dd)
+          !isfirst && this.activeTheDefaultPage(dd.mainid);
+        }
       }
     },
-    // 获取地址
+    /**
+     * 切换一级目录或者二级目录时，自动开发配置的页面，已经打开则切换tab到该页面
+     */
+    activeTheDefaultPage(mainid) {
+      console.log('activeTheDefaultPage', mainid)
+      // 查询当前哪个节点
+      let nodes = [];
+      this.getNode(this.result, mainid, nodes);
+      console.log(nodes);
+      if (nodes && nodes.length > 0) {
+        let node = nodes[0]
+        const item = this.editableTabs.find((item) => {
+          return item.name === node.id
+        })
+        if (item) {
+          this.editableTabsValue = mainid;
+          this.$router.replace(`/?page=${node.id}&title=${node.text}`).catch(err => {err});
+        } else {
+          this.addTab(node.text, this.getIFrameSrc(node.id), node.id)
+        }
+      }
+    },
+    /** 根据id获取节点 （尾递归）*/
+    getNode(list, mainid, result) {
+      for (let index = 0; index < list.length; index++) {
+        if (list[index].children && list[index].children.length > 0) {
+          this.getNode(list[index].children, mainid, result);
+        } else {
+          if (list[index].id == mainid) {
+            result.push(list[index]);
+          }
+        }
+      }
+    },
+    /** 获取地址 */
     getIFrameSrc(id) {
       if (id) {
         return `${this.baseapi}/v10/entry/access/${id}?dashboardType=5`;
       }
       return '';
     },
-    // 获取地址
+    // 获取首页地址 待优化
     getHomePageSrc(id) {
       // `/webroot/decision/v10/entry/access/09d9715a-0e10-4ea4-98c7-7ebabae571f7?dashboardType=5`
       // `http://bi.battleofballs.com`
@@ -225,30 +276,24 @@ export default {
     chooseModule(item) {
       this.activeId = item.id
       this.treeData = item.children;
-      if (!item.isParent) {
-        this.currentReport = item;
-      }
-      if (item.text === '实时监控') {
-        this.refreshpid = item.id;
-      }
+
+      const default_game = config.games.find((g) => {
+        return g.name == this.game.text;
+      })
+      const dd = default_game.tabs.find((t) => {
+        return t.name == item.text;
+      })
+      this.activeTheDefaultPage(dd.mainid);
     },
     // 选择节点
-    handleNodeClick(data) {
+    handleNodeClick(data) {     
       if (data.isParent) {
-        if (data.text === '实时监控') {
-          this.refreshpid = data.id;
-        }
         return;
       }
-      
-      this.currentReport = data;
       this.addTab(data.text, this.getIFrameSrc(data.id), data.id)
     },
     // 树节点打开
     handleNodeExpand(node) {
-      if (node.text === '实时监控') {
-        this.refreshpid = node.id;
-      }
     },
     // 登出
     handleCommand(command) {
@@ -294,7 +339,11 @@ export default {
         .then((data) => {
           if (data && data.includes('<!DOCTYPE html>')) {
             this.$store.commit('setToken', '');
-            this.$router.push('/login');
+            if (this.$route.query.page) {
+              this.$router.replace(`/login?page=${this.$route.query.page}&title=${this.$route.query.title}`).catch(err => {err});
+            } else {
+              this.$router.replace('/login').catch(err => {err});
+            }
           }
           if (data) {
             const result = jsonToTree(data, 'id', 'pId');
@@ -309,12 +358,16 @@ export default {
               if (element.text === '球球大作战' ) {
                 this.games.push({ text: element.text, id: element.id });
                 this.gameid = element.id;
-                this.selectGame();
+                this.selectGame(element.id, true);
               }
               if (element.text === '嘿嘿语音' ) {
                 this.games.push({ text: element.text, id: element.id });
               }
             }
+
+            this.$nextTick(() => {
+              this.getNotice();
+            });
           }
         })
         .catch((error) => {
@@ -366,6 +419,25 @@ export default {
     },
     addQueryPage(id, title) {
       this.addTab(title || 'NEWPAGE', this.getIFrameSrc(id), id);  
+    },
+    getNotice() {
+      axios.get(process.env.AssetsPublicPath + 'static/config/notice.json').then((res) => {
+        var result = res.data
+        if (result.notices && result.notices.length > 0) {
+          for (let index = 0; index < result.notices.length; index++) {
+            const element = result.notices[index];
+            setTimeout(() => {
+              this.$notify({
+                title: element.title,
+                message: element.content,
+                type: element.type,
+                duration: element.duration,
+                offset: 40
+              });
+            }, (index + 4) * 1500)
+          }
+        }
+      })
     }
   }
 }

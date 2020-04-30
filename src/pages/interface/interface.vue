@@ -1,8 +1,10 @@
 <template>
   <div class="interface-container">
+    <!-- 
+      测试a 链接，刷新已经存在的链接，而不是打开一个新tab
     <a href="http://192.168.96.85:8080/bi/#/feedbackquery?desc=球球&start=2020-04-05&end=2020-04-11&v=12.1.3&os=ios&uid=45396718&st=1" target="http://192.168.96.85:8080/bi/#/feedbackquery">球球</a>
     <a href="http://192.168.96.85:8080/bi/#/feedbackquery?desc=充值&os=iOS" target="http://192.168.96.85:8080/bi/#/feedbackquery">充值</a>
-    <a href="http://192.168.96.85:8080/bi/#/feedbackquery?desc=小龙女&v=12.1.3" target="http://192.168.96.85:8080/bi/#/feedbackquery">小龙女</a>
+    <a href="http://192.168.96.85:8080/bi/#/feedbackquery?desc=小龙女&v=12.1.3" target="http://192.168.96.85:8080/bi/#/feedbackquery">小龙女</a> -->
     <header>
       <router-link to="/">back</router-link><h3>{{ test }}  <a href="https://yapi.fanruan.com/api/public/plugin/documents">基于文档</a></h3> 
     </header>
@@ -26,6 +28,7 @@
 </template>
 
 <script>
+import { mapState } from 'vuex';
 import jsonp from '../../service/jsonp'
 import service from '../../service/index'
 import jsonView from 'vue-json-views'
@@ -35,10 +38,8 @@ export default {
   data () {
     return {
       test: '手动填写API测试页面',
-      username: '',
       password: '',
-      token: '',
-      path: '',
+      path: 'http://bob.ztgame.com/webroot/decision/v10/user/behavior/log',
       params: '',
       res: {},
       res_str: '',
@@ -46,11 +47,19 @@ export default {
     };
   },
   created() {
+    this.params = {
+      count: 20,
+      page: 1,
+      start: '2020-04-25',
+      end: '2020-04-27',
+      usernameList: ['yaoxin1']
+    }
   },
   components: {
     jsonView
   },
   computed: {
+    ...mapState(['token', 'username'])
   },
   mounted () {
   },
@@ -71,10 +80,10 @@ export default {
         });
     },
     sendpost() {
-      console.log(this.params)
-      const p = JSON.parse(this.params);
-      console.log(p)
-      service.post(this.path + `?fine_auth_token=${this.token}`, p)
+      // console.log(this.params)
+      // const p = JSON.parse(this.params);
+      // console.log(p)
+      service.post(this.path + `?fine_auth_token=${this.token}`, this.params)
         .then((data) => {
           console.log(data);
           this.res = data;
@@ -125,6 +134,8 @@ export default {
   }
 }
 </script>
+
+
 
 <style lang='less' scoped>
 .interface-container {

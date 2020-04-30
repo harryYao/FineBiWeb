@@ -5,7 +5,7 @@
         <div class="left-inner">
           <div class="title">
             <span class="logo"></span>
-            <span class="text">球球智能报表</span>
+            <span class="text">商业智能报表</span>
           </div>
         </div>
       </div>

@@ -3,6 +3,7 @@
 
   // 将服务器数据解析为echarts需要的格式
   var group = function (data, def) {
+    
     var nodes = [];
     var links = [];
     var cat_dict = {}
@@ -53,16 +54,22 @@
               return n.name == element;
             }
           })
-          links.push({
-            "id": index + '_' + j,
-            "name": null,
-            "source": index,
-            "target": node.id,
-            "lineStyle": { "normal": {} }
-          })
+          if(node) {
+            links.push({
+              "id": index + '_' + j,
+              "name": nodename + '_' + element,
+              "cat": nodename,
+              "source": index,
+              "target": node.id,
+              "lineStyle": { "normal": {} }
+            })
+          } else {
+            console.log(element, cat, nodename)
+          }
         }
       }
     }
+    
     return {
       nodes: nodes,
       links: links,
@@ -79,7 +86,6 @@
      */
     miserables: function (options, datas, def) {
       var graph = group(datas, def);
-      console.log(graph);
 
       var op_symbolSize = {
         max: 400,  // 球的最大值
@@ -119,7 +125,7 @@
             return a.name;
           })
         }],
-        animationDuration: 1000,
+        animationDuration: 500,
         animationEasingUpdate: 'quinticInOut',
         series: [
           {
@@ -165,4 +171,5 @@
       return option;
     }
   });
+
 })();

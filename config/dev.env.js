@@ -8,5 +8,6 @@ module.exports = merge(prodEnv, {
   // BASE_API: '"http://192.168.96.242:37799/webroot/decision"'
   // BASE_API: '"http://192.168.96.85:37799/webroot/decision"'
   // new host http://bob.ztgame.com/bi
-  BASE_API: '"http://bob.ztgame.com/webroot/decision"'
+  BASE_API: '"http://bob.ztgame.com/webroot/decision"',
+  AssetsPublicPath: '"/"'
 })

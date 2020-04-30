@@ -54,18 +54,19 @@
           <p>用户UID</p>
           <el-input v-model="form.uid" placeholder="全部" @keypress.enter.native="onSubmit" clearable></el-input>
         </el-col>
-        <el-col :span="3" style="padding-top: 18px;">
+        <el-col :span="3" style="padding-top: 13px;">
           <el-button type="primary" @click="onSubmit">查询</el-button>
-          <el-link type="default" icon="iconfont iconExcel" @click="exportExcel">
+          <el-button type="default" icon="iconfont iconExcel" :disabled="exportloading" @click="exportExcel" 
+          v-loading="exportloading" element-loading-spinner="el-icon-loading">
             <span>导出</span>
-          </el-link>
+          </el-button>
         </el-col>
       </el-row>
     </div>
     <div class="content-panel" id="content_panel">
       <div class="sort-div">
-        <a target="_blank" rel="noopener noreferrer" :class="{'active': form.sort_type == 1 }" @click="sortSearch(1)">按时间排序<i class="el-icon-sort-down" v-if="form.sort_type == 1"></i></a>
-        <a target="_blank" rel="noopener noreferrer" :class="{'active': form.sort_type == 2 }" @click="sortSearch(2)">按信息量排序<i class="el-icon-sort-down" v-if="form.sort_type == 2"></i></a>
+        <el-button :class="{'active': form.sort_type == 2 }" @click="sortSearch(2)">按信息量排序<i class="el-icon-sort-down" v-if="form.sort_type == 2"></i></el-button>
+        <el-button :class="{'active': form.sort_type == 1 }" @click="sortSearch(1)">按时间排序<i class="el-icon-sort-down" v-if="form.sort_type == 1"></i></el-button>
       </div>
       <el-table :data="tableData" style="width: 100%; font-size: 12px;">
         <el-table-column prop="desc" label="反馈内容" width>
@@ -110,8 +111,9 @@ export default {
   data() {
     return {
       loading: false,
+      exportloading: false,
       over: false,
-      size: 20,
+      size: 30,
       from: 0,
       form: {
         startData: '',
@@ -121,11 +123,11 @@ export default {
         os: '',
         uid: '',
         desc: '',
-        sort_type: 1
+        sort_type: 2
       },
       copy: {},
       query: '{}',
-      isTest: 1, // 是否是测试
+      isTest: 0, // 是否是测试
       testurl: '192.168.96.37', // 厚杰本地测试地址
       mainurl: 'bob-bi-api.ztgame.com', // 线上地址
       versionlist: [],
@@ -139,8 +141,8 @@ export default {
     }
   },
   mounted() {
-    !this.form.startData && (this.form.startData = moment().add(-56, 'days'));
-    !this.form.endDate && (this.form.endDate = moment().add(-26, 'days'));
+    !this.form.startData && (this.form.startData = moment().add(-6, 'days'));
+    !this.form.endDate && (this.form.endDate = moment());
     window.addEventListener('scroll', this.windowScroll);
     this.query == '{}' && this.onSubmit();
     this.getVersionList();
@@ -154,7 +156,6 @@ export default {
     },
     query() {
       this.setParams();
-      console.log('query is change!')
       this.onSubmit();
     }
   },
@@ -172,12 +173,6 @@ export default {
         this.form.os = tem.os ? tem.os : '';
         this.form.uid = tem.uid ? tem.uid : '';
         this.form.sort_type = tem.st ? tem.st : 1;
-        // tem.start && (this.form.startData = tem.start);
-        // tem.end && (this.form.endDate = tem.end);
-        // tem.v && (this.form.version = tem.v);
-        // tem.os && (this.form.os = tem.os);
-        // tem.uid && (this.form.uid = tem.uid);
-        // tem.st && (this.form.sort_type = tem.st);
       }
     },
     onSubmit() {
@@ -205,19 +200,7 @@ export default {
         headers: { 'content-type': 'application/x-www-form-urlencoded; charset=UTF-8'},  
         url: `http://${ this.isTest ? this.testurl: this.mainurl }:5001/getInfo`,
         timeout: 10000,
-        data: Qs.stringify({
-          "startDate": moment(this.copy.startData).format('YYYY-MM-DD'),
-          "endDate": moment(this.copy.endDate).format('YYYY-MM-DD'),
-          "zsentiment": this.copy.zsentiment,
-          "uid": this.copy.uid,
-          "game_version": this.copy.version,
-          "device_type": this.copy.os,
-          "desc": this.copy.desc,
-          "sort_type": this.copy.sort_type,
-          "size": this.size,
-          "from": this.from,
-          "token": this.token
-        })
+        data: this.getData()
       })
       .then((response) => {
         const res = response.data;
@@ -239,6 +222,7 @@ export default {
         }        
       })
       .catch((error) => {
+        this.loading = false;
         console.log(error);
       });
     },
@@ -277,46 +261,67 @@ export default {
       }
     },
     exportExcel() {
-      axios({
-        method: 'POST',
-        headers: { 'content-type': 'application/x-www-form-urlencoded; charset=UTF-8'},
-        url: `http://${ this.isTest ? this.testurl: this.mainurl }:5001/download_excel`,
-        responseType: 'blob',
-        data: Qs.stringify({
-          "startDate": moment(this.copy.startData).format('YYYY-MM-DD'),
-          "endDate": moment(this.copy.endDate).format('YYYY-MM-DD'),
-          "zsentiment": this.copy.zsentiment,
-          "uid": this.copy.uid,
-          "game_version": this.copy.version,
-          "device_type": this.copy.os,
-          "desc": this.copy.desc,
-          "sort_type": this.copy.sort_type,
-          "size": this.size,
-          "from": this.from,
-          "token": this.token
+      if (!this.exportloading) {
+        this.exportloading = true;
+        axios({
+          method: 'POST',
+          headers: { 'content-type': 'application/x-www-form-urlencoded; charset=UTF-8'},
+          url: `http://${ this.isTest ? this.testurl: this.mainurl }:5001/download_excel`,
+          responseType: 'blob',
+          data: this.getData()
         })
-      })
-      .then((res) => {
-        console.log(res);
-        let blob = new Blob([res.data], {type: res.type})
-        let downloadElement = document.createElement('a')
-        let href = window.URL.createObjectURL(blob); //创建下载的链接
-        downloadElement.href = href;
-        downloadElement.download = `${this.username}_${new Date().getTime()}.xlsx`; //下载后文件名
-        document.body.appendChild(downloadElement);
-        downloadElement.click(); //点击下载
-        document.body.removeChild(downloadElement); //下载完成移除元素
-        window.URL.revokeObjectURL(href); //释放blob对象
-      })
-      .catch((error) => {
-        console.log(error);
+        .then((res) => {
+          let blob = new Blob([res.data], {type: res.type})
+          let downloadElement = document.createElement('a')
+          let href = window.URL.createObjectURL(blob); //创建下载的链接
+          downloadElement.href = href;
+          downloadElement.download = `${this.username}_${new Date().getTime()}.xlsx`; //下载后文件名
+          document.body.appendChild(downloadElement);
+          downloadElement.click(); //点击下载
+          document.body.removeChild(downloadElement); //下载完成移除元素
+          window.URL.revokeObjectURL(href); //释放blob对象
+          this.exportloading = false;
+        })
+        .catch((error) => {
+          console.log(error);
+          this.exportloading = false;
+        });        
+      }
+    },
+    getData() {
+      return Qs.stringify({
+        "startDate": moment(this.copy.startData).format('YYYY-MM-DD'),
+        "endDate": moment(this.copy.endDate).format('YYYY-MM-DD'),
+        "zsentiment": this.copy.zsentiment,
+        "uid": this.copy.uid,
+        "game_version": this.copy.version,
+        "device_type": this.copy.os,
+        "desc": this.copy.desc,
+        "sort_type": this.copy.sort_type,
+        "size": this.size,
+        "from": this.from,
+        "token": this.token
       });
     }
   }
 }
 </script>
+<style lang="less">
 
+</style>
 <style lang="less" scoped>
+// Loading的样式 TODO
+// /deep/.el-loading-mask.is-fullscreen .el-loading-spinner {
+//   width: 100px;
+//   height: 100px;
+//   left: calc(50% - 50px);
+//   top: calc(50% - 50px);
+//   background-color: rgba(206, 210, 218, 0.4);
+//   border-radius: 10px;
+//   display: flex;
+//   justify-content: center;
+//   align-items: center;
+// }
 .feedback-container {
   // height: 100%;
   min-height: 100vh;
@@ -333,6 +338,11 @@ export default {
           margin-left: 30px;
           padding: 2px;
         }
+        /deep/.el-button {
+          .el-loading-mask .el-loading-spinner {
+            margin-top: -7px;
+          }
+        }
       }
     }
   }
@@ -340,14 +350,16 @@ export default {
     padding: 6px 10px 10px;
     // min-height:70vh;
     .sort-div {
-      a {
+      /deep/.el-button {
         font-size: 12px;
-        padding: 2px 10px 2px 2px;
+        padding: 5px 10px;
         cursor: pointer;
-        color: #5D89FE;
+        color: #409EFF;
+        border-color: #409EFF;
         &.active {
           cursor: auto;
           color: rgb(162, 165, 172);
+          border-color: rgb(162, 165, 172);
         }
       }
     }

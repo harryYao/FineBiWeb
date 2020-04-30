@@ -9,7 +9,7 @@ function resolve (dir) {
 }
 
 
-
+var istest = require('yargs').argv.istest;
 module.exports = {
   context: path.resolve(__dirname, '../'),
   entry: {
@@ -19,7 +19,7 @@ module.exports = {
     path: config.build.assetsRoot,
     filename: '[name].js',
     publicPath: process.env.NODE_ENV === 'production'
-      ? config.build.assetsPublicPath
+      ? (istest == 1 ? config.test.assetsPublicPath: config.build.assetsPublicPath)
       : config.dev.assetsPublicPath
   },
   resolve: {
