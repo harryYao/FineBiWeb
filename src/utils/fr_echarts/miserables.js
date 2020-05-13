@@ -129,7 +129,7 @@
         animationEasingUpdate: 'quinticInOut',
         series: [
           {
-            name: '用户反馈主题关系',
+            name: def.title.node,
             type: 'graph',
             layout: 'force',
             data: graph.nodes,

@@ -4,7 +4,6 @@ test.setEnable(false)
 $("#fr-btn-FORMSUBMIT0").text("提交中....")
 
 
-
 function retime(){
 	$("#fr-btn-FORMSUBMIT2").trigger("click");
 	var err_state =  $('td[id^=D2-]').text(); //获取E3单元格的值
@@ -53,5 +52,5 @@ FR.ajax({
 	}  
 });
 
-// alert("提交成功,日志打包中,请稍等.......");
+alert("提交成功,日志打包中,请稍等.......");
 return false;

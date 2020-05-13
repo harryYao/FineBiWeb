@@ -5,6 +5,7 @@ import ApiTestPage from '@/pages/apitest/index'
 import LoginPage from '@/pages/login/index'
 import InterfacePage from '@/pages/interface/interface'
 import FeedbackQuery from '@/pages/feedbackquery/index'
+import SqlQuery from '@/pages/sqlquery/index'
 
 Vue.use(Router)
 
@@ -36,13 +37,22 @@ let router = new Router({
       path: '/feedbackquery',
       name: 'FeedbackQuery',
       component: FeedbackQuery
+    },
+    {
+      path: '/sqlquery',
+      name: 'SqlQuery',
+      component: SqlQuery
     }
   ]
 })
 
 router.beforeEach((to, from, next) => {
   // console.log('beforeEach', to, from)
-  next()
+  if (to.matched.length === 0) {
+    from.name? next({name: from.name}) : next('/'); 
+  } else {
+    next();
+  }
 });
 
 router.afterEach((to, from) => {
