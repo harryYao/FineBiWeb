@@ -1,0 +1,63 @@
+<html>
+<head>
+</head>
+
+<body>
+	<div id="placeholder"></div>
+
+	<script type="text/javascript" src="http://117.184.40.175/web-apps/apps/api/documents/api.js"></script>
+	<script type="text/javascript">
+		var docEditor;
+		var platform = "desktop";//浏览平台
+		if(/AppleWebKit.*Mobile/i.test(navigator.userAgent) || (/MIDP|SymbianOS|NOKIA|SAMSUNG|LG|NEC|TCL|Alcatel|BIRD|DBTEL|Dopod|PHILIPS|HAIER|LENOVO|MOT-|Nokia|SonyEricsson|SIE-|Amoi|ZTE/.test(navigator.userAgent))){
+			if(window.location.href.indexOf("?mobile")<0){
+				try{
+					if(/Android|webOS|iPhone|iPod|BlackBerry/i.test(navigator.userAgent)){
+						platform = "mobile";
+					}
+				}catch(e){}
+			}
+		}
+		var config = {
+			"type": "desktop",
+			"documentType": "spreadsheet", //文档类-text、表格类-spreadsheet、ppt类-presentation
+			"document": {
+				"title": "球球大作战数据字典",
+				"url":"http://file.superpopgames.com:8080/index.php?user/publicLink&fid=3a2bb8sAl5L8S8j-RRSfCCmWgmHaG2oTYwp7PXPo4eictyl1zgPsbM0fw5M3bczpZEGYfUDEIXP01ahLUVdOtPm5hsvdOxx_6szxr4qocDRtIA_syMI6tQV-726ciVsUuh1ueR2gss5Ue6qDg0WT4MiP5PyCi4s&file_name=/%E7%90%83%E7%90%83%E5%A4%A7%E4%BD%9C%E6%88%98%E6%95%B0%E6%8D%AE%E5%AD%97%E5%85%B8.xlsx",
+				"fileType": "xlsx",
+				//"fileType": "pdf",
+				"key": null,
+				"permissions": {
+					"comment": true,
+					"download": false,
+					"edit": false,
+					"fillForms": true,
+					"modifyContentControl": true,
+					"modifyFilter": true,
+					"print": true,
+					"review": true
+				},
+			},
+			"editorConfig": {
+				"mode": "view",
+				"callbackUrl": "",
+				"user": {
+					"id": "",
+					"name": ""
+				},
+				"customization": {
+					"goback": {
+						"url": null
+					}
+				},
+				"embedded": null,
+				"lang": "zh-CN"
+			},
+			"token": null
+		};
+		config.type = platform;
+		docEditor = new DocsAPI.DocEditor("placeholder", config);
+	</script>
+</body>
+
+</html>

@@ -89,12 +89,13 @@
             v-loading="exportloading" element-loading-spinner="el-icon-loading">导出</el-button>
         </el-col>
       </el-row>
-    </div>
-    <div class="content-panel" id="content_panel">
       <div class="sort-div">
         <el-button :class="{'active': form.sort_type == 2 }" @click="sortSearch(2)">按信息量排序<i class="el-icon-sort-down" v-if="form.sort_type == 2"></i></el-button>
         <el-button :class="{'active': form.sort_type == 1 }" @click="sortSearch(1)">按时间排序<i class="el-icon-sort-down" v-if="form.sort_type == 1"></i></el-button>
       </div>
+    </div>
+    <div class="content-panel" id="content_panel">
+
       <el-table :data="tableData" style="width: 100%; font-size: 12px;">
         <el-table-column prop="desc" label="反馈内容" width>
           <template slot-scope="scope">
@@ -145,6 +146,7 @@ import { mapState } from 'vuex';
 import axios from 'axios'
 import Qs from 'qs';
 import moment from 'moment';
+import Sticky from '@/components/sticky'
 
 export default {
   data() {
@@ -182,8 +184,12 @@ export default {
       isTest: 0 // 是否是测试
     }
   },
+  components: {
+    Sticky
+  },
   created() {
     if (this.$route.query) {
+      this.query = JSON.stringify(this.$route.query);
       this.setParams();
       if (this.$route.query.source == '1') {
         this.getBBSModuleList();
@@ -222,7 +228,7 @@ export default {
       if (this.query !== '{}') {
         const tem = JSON.parse(this.query);
         this.source = tem.source ? tem.source : '0';
-        this.form.desc = tem.desc ? tem.desc : '';
+        this.form.desc = tem.desc ? decodeURIComponent(tem.desc) : '';
         this.form.startData = tem.start ? tem.start : moment().add(-1, 'days');
         this.form.endDate = tem.end ? tem.end : moment();
         this.form.version = tem.v ? tem.v : '';
@@ -231,9 +237,9 @@ export default {
         this.form.sort_type = tem.st ? tem.st : 1;
         this.form.rank = tem.rank ? tem.rank : '';
         if (tem.source == '1') {
-          this.form.category1 = tem.cate ? tem.cate : '';
+          this.form.category1 = tem.cate ? decodeURIComponent(tem.cate) : '';
         } else if (tem.source == '2') {
-          this.form.category2 = tem.cate ? tem.cate : '';
+          this.form.category2 = tem.cate ? decodeURIComponent(tem.cate) : '';
         }
       }
     },
@@ -474,7 +480,13 @@ export default {
   min-height: 100vh;
   overflow: auto;
   .query-panel {
+    position: fixed;
+    z-index: 10;
+    top: 0;
+    width: 100%;
     padding: 10px;
+    background-color: #ffffff;
+    box-shadow: 1px 1px #ededed;
     .el-row {
       .el-col {
         p {
@@ -500,11 +512,8 @@ export default {
       margin-left: 10px;
       color: @fc;
     }
-  }
-  .content-panel {
-    padding: 6px 10px 10px;
-    // min-height:70vh;
     .sort-div {
+      padding-top: 10px;
       /deep/.el-button {
         font-size: 12px;
         padding: 5px 10px;
@@ -518,6 +527,10 @@ export default {
         }
       }
     }
+  }
+  .content-panel {
+    padding: 136px 10px 10px;
+    // min-height:70vh;
     /deep/.el-table {
       td {
         padding: 8px 0;

@@ -6,10 +6,13 @@ import router from './router'
 import store from './store'
 import ElementUI from 'element-ui';
 import 'element-ui/lib/theme-chalk/index.css';
+import VueClipboard from 'vue-clipboard2'
 
 import './assets/base.less'
 import './assets/icons/iconfont.css'
 
+VueClipboard.config.autoSetContainer = true
+Vue.use(VueClipboard)
 Vue.config.productionTip = false
 
 // 弹出框禁止滑动
