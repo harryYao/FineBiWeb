@@ -57,3 +57,35 @@ if(days > 0) {
 		}	
 	}, 300)
 }
+
+
+var startdate = this.options.form.getWidgetByName("startdate");
+var yearmonth = this.options.form.getWidgetByName("date");
+var day = this.options.form.getWidgetByName("day");
+startdate.setValue(new Date(yearmonth.getValue() + "-01"));
+var enddate = this.options.form.getWidgetByName("enddate");
+
+var month1stday = this.options.form.getWidgetByName("date").getValue() + "-01";
+var ymd = new Date(month1stday);
+var thisyear = ymd.getFullYear();
+var thismonth = ymd.getMonth();
+var nextMonth = ++thismonth;
+var nextMonthFirstDay = new Date(thisyear,nextMonth,1);
+var oneDay=1000*60*60*24;
+var month_last_day = new Date(nextMonthFirstDay-oneDay);
+
+var yy = month_last_day.getFullYear();      //年
+var mm = month_last_day.getMonth() + 1;     //月
+var dd = month_last_day.getDate();          //日
+var mld = yy + "-";
+if(mm < 10) mld += "0";
+mld += mm + "-";
+if(dd < 10) mld += "0";
+mld += dd + " ";
+var yesday = new Date(new Date().getTime() - oneDay);
+if (yesday.getFullYear() == yy && (yesday.getMonth() + 1) == mm) {
+	day.setValue(yesday.getDate());
+} else {
+	day.setValue(dd);
+}
+enddate.setValue(new Date(mld));

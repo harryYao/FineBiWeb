@@ -92,6 +92,8 @@
       <div class="sort-div">
         <el-button :class="{'active': form.sort_type == 2 }" @click="sortSearch(2)">按信息量排序<i class="el-icon-sort-down" v-if="form.sort_type == 2"></i></el-button>
         <el-button :class="{'active': form.sort_type == 1 }" @click="sortSearch(1)">按时间排序<i class="el-icon-sort-down" v-if="form.sort_type == 1"></i></el-button>
+        <!-- 保留有效内容， title="过滤反馈内容长度小于等于6的内容" -->
+        <el-checkbox v-model="form.checked" v-if="form.sort_type == 1" size="small" title="过滤反馈内容长度小于等于6的内容">保留有效内容</el-checkbox>
       </div>
     </div>
     <div class="content-panel" id="content_panel">
@@ -115,14 +117,14 @@
             <p class="row1" :title="`账号：${scope.row.submit_user}\n${scope.row.contact?scope.row.contact.replace('Tel:', ' Tel:'):''}\n${scope.row.location||''}`">
               <span class="lable_span">账号：{{scope.row.submit_user}}</span>
               <span v-if="scope.row.contact">{{scope.row.contact.replace("Tel:", " Tel:")}}</span>
-              <span v-if="scope.row.location">地区：{{scope.row.location}}</span>
+              <!-- <span v-if="scope.row.location">地区：{{scope.row.location}}</span> -->
             </p>
             <p v-if="source == '1' || source == '2'" >
               <span>来源：{{scope.row.category}}</span>
               <span v-if="scope.row.platform">系统：{{scope.row.platform}}</span>
               <span v-if="scope.row.rank">评分：{{scope.row.rank}}</span>
             </p>
-            <p>
+            <p class="ellipsis">
               <span v-if="scope.row.game_version">版本{{scope.row.game_version}}</span>
               <span
                 class="devicetype"
@@ -130,7 +132,9 @@
                 v-if="scope.row.device_type"
               >{{ scope.row.device_type.length > 120?scope.row.device_type.substr(0, 120) + '...': scope.row.device_type}}</span>
             </p>
-
+            <p v-if="source == '0'">
+              <span v-if="scope.row.location">地区：{{scope.row.location}}</span>
+            </p>
           </template>
         </el-table-column>
       </el-table>
@@ -169,8 +173,10 @@ export default {
         sort_type: 2,
         rank: '',
         category1: '',
-        category2: ''
+        category2: '',
+        checked: true,
       },
+      
       copy: {},
       query: '{}',
       apilist: {"0":"get_info", "1":"get_bbs_info", "2":"get_shop_info"},
@@ -190,6 +196,9 @@ export default {
   created() {
     if (this.$route.query) {
       this.query = JSON.stringify(this.$route.query);
+      if (this.$route.query.istest) {
+        this.isTest = parseInt(this.$route.query.istest)
+      }
       this.setParams();
       if (this.$route.query.source == '1') {
         this.getBBSModuleList();
@@ -426,6 +435,7 @@ export default {
           "sort_type": this.copy.sort_type,
           "size": this.size,
           "from": this.from,
+          "delete_invalid": this.copy.checked ? 1 : 0,
           "token": this.token
         });
       } else if (this.source == "1") {
@@ -438,6 +448,7 @@ export default {
           "sort_type": this.copy.sort_type,
           "size": this.size,
           "from": this.from,
+          "delete_invalid": this.copy.checked ? 1 : 0,
           "token": this.token
         });
       } else if (this.source == "2") {
@@ -475,6 +486,11 @@ export default {
 //   justify-content: center;
 //   align-items: center;
 // }
+.ellipsis {
+  overflow: hidden;
+  text-overflow:ellipsis;
+  white-space: nowrap;
+}
 .feedback-container {
   // height: 100%;
   min-height: 100vh;
@@ -525,6 +541,9 @@ export default {
           color: @fc;
           border-color: @fc;
         }
+      }
+      /deep/.el-checkbox {
+        margin-left: 20px;
       }
     }
   }

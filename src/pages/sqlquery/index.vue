@@ -1,16 +1,16 @@
 <template>
   <div class="sqlquery-wp" v-loading="loading2">
-    <div class="header-bar">
-      <h4>SQL自助查询</h4>
-      <el-link type="primary" href="/static/file/dic.html" target="_blank">查看数据字典</el-link>
-    </div>
     <el-row :gutter="20">
       <el-col :span="12">
-        <el-input v-model="sql" type="textarea" placeholder="请输入查询语句" :rows="10" resize="none"></el-input>
+        <div class="header-bar">
+          <h4>SQL自助查询</h4>
+          <el-link type="primary" href="http://file.superpopgames.com:8080/dict.html" target="_blank">查看数据字典</el-link>
+        </div>
+        <el-input v-model="sql" type="textarea" placeholder="请输入查询语句, 请使用明确的查询字段" :rows="12" resize="none"></el-input>
         <div class="btn-view">
           <el-input class="purpose-input" placeholder="请输入用途" v-model="purpose"></el-input>
           <!-- <el-button @click="clearTime">清除刷新</el-button> -->
-          <el-button type="primary" @click="commitSQLQuery" :disabled="loading2 || loading ">提交</el-button>
+          <el-button type="primary" @click="commitSQLQuery" :disabled="loading2">提交</el-button>
         </div>
       </el-col>
       <el-col :span="12">
@@ -19,7 +19,7 @@
         </el-scrollbar>
       </el-col>
     </el-row>
-    <div class="content-wp" v-loading="loading">
+    <div class="content-wp">
       <el-table stripe
         :data="tableData"
         style="width: 100%">
@@ -27,7 +27,7 @@
           label="复制"
           width="70" align="center">
           <template slot-scope="scope">
-            <el-link icon="el-icon-document-copy" class="copy-link" size="mini" v-clipboard:copy="scope.row.exec_sql" 
+            <el-link icon="el-icon-document-copy" title="复制SQL" class="copy-link" size="mini" v-clipboard:copy="scope.row.exec_sql" 
             v-clipboard:success="onCopy"> </el-link>
           </template>
         </el-table-column>
@@ -37,12 +37,12 @@
           <template slot-scope="scope">
             <el-popover
               placement="top"
-              width="400"
+              width="500"
               trigger="hover">
               <el-scrollbar>
                 <prism class="prism-wp-pop" language="sql" :code="sqlfmt(scope.row.exec_sql)"></prism>
               </el-scrollbar>
-              <p class="sqltext" slot="reference">{{scope.row.exec_sql}}</p>
+              <p class="ellipsis" slot="reference">{{scope.row.exec_sql}}</p>
             </el-popover>
           </template>
         </el-table-column>
@@ -50,21 +50,25 @@
           prop="purpose"
           label="用途"
           width="220">
+          <template slot-scope="scope">
+            <span class="ellipsis" :title="scope.row.purpose">{{scope.row.purpose}}</span>
+          </template>
         </el-table-column>
         <el-table-column
           prop="file_path"
           label="状态"
           width="160">
           <template slot-scope="scope">
-            <p v-if="scope.row.exec_state == 'ERROR' || scope.row.exec_state == '失败'" class="error_p">
+            <p v-if="scope.row.exec_state == 'ERROR' || scope.row.exec_state == '失败' || scope.row.exec_state == '异常'" class="error_p">
               <span class="error_span">失败</span>
-              <span class="error_span_log" :title="scope.row.err_log" v-clipboard:copy="scope.row.err_log" v-clipboard:success="onCopy">日志</span>
+              <span class="error_span_log" :title="`${scope.row.err_log}\n（单击复制日志）`" v-clipboard:copy="scope.row.err_log" v-clipboard:success="onCopy">日志</span>
             </p>
             <p v-else-if="scope.row.exec_state == '上传文件完成' || scope.row.exec_state == '成功' " class="success_p">
               <span>成功</span>
               <el-link type="primary" v-if="scope.row.file_path" target="_blank" :href="`http://115.159.248.97:8080/downFile?filename=${scope.row.file_name}&downloadPath=${scope.row.file_path}`">下载</el-link>
             </p>
             <p v-else>
+              <span class="loading-span" v-if="isshowloading(scope.row.dates)" v-loading="true" element-loading-spinner="el-icon-loading" element-loading-background="rgba(0, 0, 0, 0)"></span>
               <span>{{scope.row.exec_state}}</span>
             </p>
           </template>
@@ -113,6 +117,7 @@ import { setInterval, clearInterval } from "timers";
 export default {
   data() {
     return {
+      isTest: 0,
       purpose: '',
       sql: '',
       sql_fmt: '',
@@ -124,7 +129,9 @@ export default {
       loading2: false,
       loading: false,
       timer: null,
-      interval: 20 //秒
+      interval: 20, //秒
+      testurl: 'http://47.103.168.10:8088/',
+      mainurl: 'http://115.159.248.97:8080/'
     }
   },
   computed: {
@@ -144,11 +151,17 @@ export default {
     }
   },
   mounted() {
+    if (this.$route.query.istest) {
+      this.isTest = parseInt( this.$route.query.istest);
+    }
     this.startQuery();
+  },
+  destroyed() {
+    this.clearTime();
   },
   methods: {
     onCopy() {
-      this.$message.success("复制成功！");
+      this.$message.success('复制成功！');
     },
     clearTime() {
       if (this.timer) {
@@ -167,6 +180,9 @@ export default {
     timefmt(v) {
       return moment(v).format('YYYY-MM-DD HH:mm:ss');
     },
+    isshowloading(t) {
+      return moment(t).isSame(moment(), 'day');
+    },
     sqlfmt(newval) {
       if (newval) {
         return sqlFormatter.format(newval, {
@@ -180,10 +196,17 @@ export default {
       if (this.sql.trim()) {
         this.loading2 = true;
         // const url = `http://115.159.248.97:8080/pullDataWriteSql?user_name=${this.username}&writeSql=${Base64.encode(this.sql)}&purpose=${this.purpose}`;
-        const url = `http://47.103.168.10:8088/pullDataWriteSql?user_name=${this.username}&writeSql=${Base64.encode(this.sql)}&purpose=${this.purpose}`;
+        const url = `${this.isTest?this.testurl:this.mainurl}pullDataWriteSql?user_name=${this.username}&writeSql=${Base64.encode(this.sql)}&purpose=${this.purpose}&token=${this.token}`;
         jsonp(url).then((data) => {
+          console.log(data);
+          if (data == "idcard error") {
+            this.$message.error('身份验证失败、请通过BI入口访问')
+          } else if (data == "select * error") {
+            this.$message.error('禁止使用select *，请指定具体列名');
+          } else {
+            this.startQuery();
+          }
           this.loading2 = false;
-          this.startQuery();
         })
       }
     },
@@ -191,12 +214,13 @@ export default {
       this.loading = true;
       axios({
         method: 'POST',
-        url: `http://47.103.168.10:8088/getPullDataLogByDate?`,
+        url: `${this.isTest?this.testurl:this.mainurl}getPullDataLogByUser?`,
         timeout: 10000,
         data: {
           "user_name": this.username,
           "size": this.size,
-          "from": this.from - 1
+          "from": this.from - 1,
+          "token": this.token
         }
       })
       .then((response) => {
@@ -204,6 +228,8 @@ export default {
         if (res.success) {
           this.total = res.total_size;
           this.tableData = res.data; 
+        } else {
+          this.$message.error(res.errorMsg)
         }
         this.loading = false;  
       })
@@ -225,7 +251,7 @@ export default {
 
 /deep/.el-scrollbar {
   .el-scrollbar__wrap {
-    height: 283px;
+    height: 356px;
     background: #f9fbfb;
     border: 1px solid #dedede;
     padding: 0px;
@@ -254,14 +280,24 @@ export default {
   max-height: 400px;
 }
 /deep/.copy-link {
-  padding: 4px 15px;
+  padding: 4px 10px;
   font-size: 14px;
   color: @fc;
 }
 .error_p {
   color: rgb(223, 69, 69);
   .error_span_log {
+    color: #606266;
     cursor: pointer;
+    text-decoration: underline;
+  }
+}
+/deep/.loading-span {
+  width: 20px;
+  height: 20px;
+  display: inline-block;
+  .el-loading-spinner {
+    margin-top: -7px;
   }
 }
 .success_p {
@@ -270,14 +306,17 @@ export default {
 .custom-dt {
   color: @fc;
 }
-.sqltext {
+.ellipsis {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 /deep/.el-table {
+  th {
+    padding: 9px 0;
+  }
   td {
-    padding: 8px 0;
+    padding: 7px 0;
     font-size: 14px;
   }
 }
@@ -288,7 +327,7 @@ export default {
     position: relative;
     /deep/.el-link{
       position: absolute;
-      right: 20px;
+      right: 0;
       top: 0;
     }
   }

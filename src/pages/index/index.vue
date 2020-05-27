@@ -80,7 +80,7 @@
                   width="80"
                   trigger="hover"
                   :popper-class="'tab-refresh'"
-                  :open-delay="600"
+                  :open-delay="800"
                   :disabled="editableTabsValue != item.name"
                 >
                   <span @click="refreshIframe(item)">刷新</span>
@@ -90,8 +90,8 @@
                   </el-button>
                 </el-popover>
               </span>
-              <!-- <div class="container" v-loading="item.loading" style="width:100%;height:100%;"> -->
-              <div class="container" style="width:100%;height:100%;">
+              <div class="container" v-loading="item.loading" style="width:100%;height:100%;">
+              <!-- <div class="container" style="width:100%;height:100%;"> -->
                 <iframe
                   :name="`iframe_${item.name}`"
                   :id="`iframe_${item.name}`"
@@ -189,6 +189,7 @@ export default {
       this.$router.go(0);
     },
     iframeLoaded(item) {
+      item.loading = false;
       var iframeWindow = document.getElementById(`iframe_${item.name}`).contentWindow;
       var currentHref = iframeWindow.document.location.href;
       console.log(currentHref);

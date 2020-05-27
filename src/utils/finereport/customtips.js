@@ -85,3 +85,57 @@ function() {
   htmlstr += '</div>';
   return htmlstr;
 }
+
+
+
+/**
+ * 活跃用户累计付费概况
+ * 折线图的提示，自定义显示方式, 
+ */
+function() {
+  var points = this.points;/*获取当前分类下所有点*/
+  var format = function (num) {  
+    var reg=/\d{1,3}(?=(\d{3})+$)/g;   
+    return (num + '').replace(reg, '$&,');  
+  };
+  var toPercent = function (point){
+    var str=Number(point*100).toFixed(2);
+    str+="%";
+    return str;
+  };
+  var showMinutes = function(value) {
+    var mimutes = Math.floor(value / 60);
+    var seconds = value % 60;
+    return mimutes + '分' + seconds + '秒'
+  };
+  var showMoney = function(num) {
+    var reg=/\d{1,3}(?=(\d{3})+$)/g;   
+    return '￥' + (num + '').replace(reg, '$&,'); 
+  };
+  var showLessMoney = function(point) {
+    var str=Number(point).toFixed(2);
+    return '￥'+str;
+  };
+  var validPoints = points.filter(function(p) {
+    return p.series.visible && p.visible && !p.isNull;/*获取当前分类下的有效点*/
+  });
+
+  var htmlstr = '<div>';
+  var spanstr1 = '<span style="background-color:';
+  var spanstr2 = ';border-radius:50%;width:8px;height:8px;display:inline-block;margin-right:6px;"></span>';
+  htmlstr += '<p>' + this.category + '</p>';
+  for (let index = 0; index < validPoints.length; index++) {
+    var element = validPoints[index];
+    var valuestr = '';
+    if (element.seriesName == '活跃用户数' || element.seriesName == '付费用户数') {
+      valuestr = format(element.value);
+    } else if (element.seriesName == '付费金额（万元）' || element.seriesName == 'arpu') {
+      valuestr = element.value.toFixed(2);
+    } else if (element.seriesName == '付费渗透率') {
+      valuestr = toPercent(element.value);
+    }
+    htmlstr += '<p style="padding-left: 6px;">' + spanstr1 + element.color + spanstr2+ element.seriesName + ': ' + valuestr + '</P>';
+  }
+  htmlstr += '</div>';
+  return htmlstr;
+}
