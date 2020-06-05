@@ -49,3 +49,65 @@ select  rate,dates
   from  dim_activity_cfg_exchange
 )  t3
 on t1.dates = t3.dates
+
+
+
+
+
+
+
+
+SELECT result_dates,pay_type,level_id, lattice_id,types, sum(num1) AS num1,sum(num2) AS num2,sum(num3) AS num3,sum(num4) AS num4, 
+sum(num5) AS num5,sum(num6) AS num6,sum(num7) AS num7,sum(num8) AS num8
+ FROM 
+(
+     SELECT result_dates,pay_type,level_id ,lattice_id,types, 0 AS num1,0 AS num2, 0 AS num3,0 AS num4 , num AS num5, 0 AS num6,0 AS num7, 0 as num8
+FROM qqdz_report.pyramid_key_prop_level_add WHERE  prop_id='141203'  AND game_id=1 
+  UNION ALL
+     SELECT result_dates,pay_type,level_id ,lattice_id,types, 0 AS num1,0 AS num2, 0 AS num3,0 AS num4 , 0 AS num5, num AS num6,0 AS num7, 0 as num8
+FROM qqdz_report.pyramid_key_prop_level_add WHERE  prop_id='141204'  AND game_id=1 
+  UNION ALL
+     SELECT result_dates,pay_type,level_id ,lattice_id,types, 0 AS num1,0 AS num2, 0 AS num3,0 AS num4 , 0 AS num5, 0 AS num6,num AS num7, 0 as num8
+FROM qqdz_report.pyramid_key_prop_level_add WHERE  prop_id='141205'  AND game_id=1 
+  UNION ALL
+   SELECT result_dates,pay_type,level_id ,lattice_id,types, 0 AS num1,0 AS num2, 0 AS num3,0 AS num4 , 0 AS num5, 0 AS num6,0 AS num7, num as num8
+FROM qqdz_report.pyramid_key_prop_level_add WHERE  prop_id='141206'  AND game_id=1 
+  UNION ALL
+  SELECT result_dates,pay_type,level_id ,lattice_id,types,num AS num1,0 AS num2, 0 AS num3,0 AS num4 , 0 AS num5, 0 AS num6,0 AS num7, 0 as num8
+FROM qqdz_report.pyramid_key_prop_level_add WHERE  prop_id='141176'  AND game_id=1  
+  UNION ALL 
+SELECT result_dates,pay_type,level_id, lattice_id,types,0 AS num1,num AS num2, 0 AS num3,0 AS num4 , 0 AS num5, 0 AS num6,0 AS num7, 0 as num8
+FROM qqdz_report.pyramid_key_prop_level_add WHERE  prop_id='141186'  AND game_id=1  
+    UNION ALL 
+SELECT result_dates,pay_type,level_id ,lattice_id,types,0 AS num1,0 AS num2, num AS num3,0 AS num4 , 0 AS num5, 0 AS num6,0 AS num7, 0 as num8
+FROM qqdz_report.pyramid_key_prop_level_add WHERE  prop_id='141174'  AND game_id=1 
+    UNION ALL 
+SELECT result_dates,pay_type,level_id ,lattice_id,types,0 AS num1,0 AS num2, 0 AS num3,num AS num4, 0 AS num5, 0 AS num6,0 AS num7, 0 as num8
+ FROM qqdz_report.pyramid_key_prop_level_add WHERE
+  prop_id='141172'  AND game_id=1 
+)t WHERE  t.result_dates BETWEEN '${pyramid_key_prop_level_add_start_date}'
+ and '${pyramid_key_prop_level_add_end_date}' and  t.pay_type in( '${pyramid_key_prop_level_add_pay_type}') 
+ and lattice_id in ('${pyramid_key_prop_level_add_lattice_id}')
+ and types in ('${pyramid_key_prop_level_add_types}')
+ GROUP BY result_dates,pay_type,level_id,lattice_id ,types
+order by result_dates desc, lattice_id 
+
+
+
+
+SELECT result_dates,pay_type,level_id, lattice_id,types, sum(num1) AS num1,sum(num2) AS num2,sum(num3) AS num3,sum(num4) AS num4 FROM 
+(SELECT result_dates,pay_type,level_id ,lattice_id,types,num AS num1,0 AS num2, 0 AS num3,0 AS num4 FROM qqdz_report.pyramid_key_prop_level_add WHERE  prop_id='141176'  AND game_id=1  
+  UNION ALL 
+SELECT result_dates,pay_type,level_id, lattice_id,types,0 AS num1,num AS num2, 0 AS num3,0 AS num4 FROM qqdz_report.pyramid_key_prop_level_add WHERE  prop_id='141186'  AND game_id=1  
+    UNION ALL 
+SELECT result_dates,pay_type,level_id ,lattice_id,types,0 AS num1,0 AS num2, num AS num3,0 AS num4 FROM qqdz_report.pyramid_key_prop_level_add WHERE  prop_id='141174'  AND game_id=1 
+    UNION ALL 
+SELECT result_dates,pay_type,level_id ,lattice_id,types,0 AS num1,0 AS num2, 0 AS num3,num AS num4 FROM qqdz_report.pyramid_key_prop_level_add WHERE
+  prop_id='141172'  AND game_id=1 
+)t WHERE  t.result_dates BETWEEN '${pyramid_key_prop_level_add_start_date}'
+ and '${pyramid_key_prop_level_add_end_date}' and  t.pay_type in( '${pyramid_key_prop_level_add_pay_type}') 
+ and lattice_id in ('${pyramid_key_prop_level_add_lattice_id}')
+ and types in ('${pyramid_key_prop_level_add_types}')
+ GROUP BY result_dates,pay_type,level_id,lattice_id ,types
+order by result_dates desc, lattice_id 
+

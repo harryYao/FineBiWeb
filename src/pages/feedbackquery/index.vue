@@ -35,7 +35,7 @@
         </el-col>
         <el-col :span="5">
           <p>内容</p>
-          <el-input v-model="form.desc" placeholder="全部" @keypress.enter.native="onSubmit" clearable size="small"></el-input>
+          <el-input v-model="form.desc" placeholder="支持多关键词查询，空格分隔" @keypress.enter.native="onSubmit" clearable size="small"></el-input>
         </el-col>
         <el-col :span="2" v-if="source == 0">
           <p>系统</p>
@@ -93,7 +93,7 @@
         <el-button :class="{'active': form.sort_type == 2 }" @click="sortSearch(2)">按信息量排序<i class="el-icon-sort-down" v-if="form.sort_type == 2"></i></el-button>
         <el-button :class="{'active': form.sort_type == 1 }" @click="sortSearch(1)">按时间排序<i class="el-icon-sort-down" v-if="form.sort_type == 1"></i></el-button>
         <!-- 保留有效内容， title="过滤反馈内容长度小于等于6的内容" -->
-        <el-checkbox v-model="form.checked" v-if="form.sort_type == 1" size="small" title="过滤反馈内容长度小于等于6的内容">保留有效内容</el-checkbox>
+        <el-checkbox v-model="form.checked" v-if="form.sort_type == 1" size="small" title="过滤反馈内容长度小于等于6的内容" @change="onSubmit">保留有效内容</el-checkbox>
       </div>
     </div>
     <div class="content-panel" id="content_panel">
@@ -462,6 +462,7 @@ export default {
           "sort_type": this.copy.sort_type,
           "size": this.size,
           "from": this.from,
+          "delete_invalid": this.copy.checked ? 1 : 0,
           "token": this.token
         });
       }

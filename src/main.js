@@ -37,7 +37,7 @@ Vue.prototype.canScroll = function () {
 Vue.use(ElementUI);
 
 /* eslint-disable no-new */
-new Vue({
+window.DDD = new Vue({
   el: '#app',
   router,
   store,

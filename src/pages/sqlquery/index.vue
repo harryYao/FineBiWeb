@@ -204,7 +204,9 @@ export default {
           } else if (data == "select * error") {
             this.$message.error('禁止使用select *，请指定具体列名');
           } else {
-            this.startQuery();
+            setTimeout(() => {
+              this.startQuery();
+            }, 1000)
           }
           this.loading2 = false;
         })

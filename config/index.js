@@ -11,7 +11,12 @@ module.exports = {
     assetsSubDirectory: 'static',
     // assetsPublicPath: '/webroot/',
     assetsPublicPath: '/',
-    proxyTable: {},
+    proxyTable: {
+      "/webroot/decision": {
+        target: "http://bob.ztgame.com",
+        changeOrigin: true
+      }      
+    },
 
     // Various Dev Server settings
     host: '0.0.0.0', // can be overwritten by process.env.HOST

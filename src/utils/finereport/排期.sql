@@ -13,7 +13,7 @@ SELECT     COALESCE(t1.name,t2.name)               AS name
           ,t1.yes_amounts
           ,COALESCE(t1.coefficient,t2.coefficient,1) as coefficient
   FROM    (--历史活动，计算日为开始第一天的活动
-           SELECT    t1.name
+           SELECT    t1.used_name              AS name
                      ,t2.coins_type
                      ,t2.begin_time
                      ,t2.end_time
@@ -33,28 +33,32 @@ SELECT     COALESCE(t1.name,t2.name)               AS name
                             END   AS pre_chgs
                      ,t1.dates
              FROM    (
-                      SELECT   name
+                      SELECT   trim(a.name)          AS name
+                               ,trim(b.used_name)    AS used_name
                                ,chgs
                                ,amounts
                                ,dates           as dates
                                ,DateFormatConvert(result_dates) AS result_dates
-                        FROM   qqdz_report.daily_act_kpi_consume 
-                       WHERE   dates BETWEEN '${startdate}' AND '${enddate}'
+                        FROM   qqdz_report.daily_act_kpi_consume  AS a
+                   LEFT JOIN   qqdz_report.dim_activity_name_cfg  AS b
+                          ON   trim(a.name) = trim(b.old_name)
+                       WHERE   dates BETWEEN '${startdate}' AND date_add('${enddate}',-1)
                          and   pay_type = '-1'
                     )    t1
        LEFT JOIN    (
                      SELECT   act_id
-                              ,concat_ws('_',activity_type,activity_id1_name)   as name
+                              ,trim(concat_ws('_',activity_type,activity_id1_name))   as name
                               ,begin_time as begin_time
                               ,end_time   as end_time
                               ,coins_type
                               ,amount
                        FROM   qqdz_report.dim_activity_cfg_infos
                     )    t2
-              ON    t1.name = t2.name
+              ON    t1.used_name = t2.name
              AND    t1.dates BETWEEN t2.begin_time AND t2.end_time
        LEFT JOIN    (--昨日实际蘑菇数值
-                     SELECT    a.name
+                     SELECT    trim(a.name)         AS name
+                               ,trim(c.used_name)   AS used_name
                                ,a.chgs
                                ,a.amounts
                                ,a.chgs*b.rate/10000   AS yes_chgs
@@ -63,10 +67,12 @@ SELECT     COALESCE(t1.name,t2.name)               AS name
                        FROM    qqdz_report.daily_act_kpi_consume a
                  INNER JOIN    qqdz_report.dim_activity_cfg_exchange b
                          ON    a.dates=b.dates
-                      WHERE    a.dates BETWEEN date_add('${startdate}',-1) AND date_add('${enddate}',-1)
+                  LEFT JOIN    qqdz_report.dim_activity_name_cfg  AS c
+                         ON    trim(a.name) = trim(c.old_name)
+                      WHERE    a.dates BETWEEN date_add('${startdate}',-1) AND date_add('${enddate}',-2)
                         AND    a.pay_type = '-1'
                     )    t3
-              ON    t1.name = t3.name
+              ON    t1.used_name = t3.used_name
              and    t1.dates = t3.dates
        LEFT JOIN    (
                     SELECT  act_id,days,coefficient
@@ -92,7 +98,7 @@ FULL OUTER JOIN    (
                     ,date_add(t1.begin_time,t2.days-1)        as dates
             FROM    (
                     SELECT   act_id
-                             ,concat_ws('_',activity_type,activity_id1_name)   as name
+                             ,trim(concat_ws('_',activity_type,activity_id1_name))   as name
                              ,begin_time as begin_time
                              ,end_time   as end_time
                              ,coins_type
@@ -107,9 +113,9 @@ FULL OUTER JOIN    (
                         )    t2
                   ON    t1.act_id = t2.act_id
           INNER JOIN    (
-                        SELECT  rate,dates  AS dates,cause
-                          FROM  qqdz_report.dim_activity_cfg_exchange
-						 WHERE  dates <= date_add('${enddate}',15)
+                         SELECT   rate,dates  AS dates,cause
+                           FROM   qqdz_report.dim_activity_cfg_exchange
+                          WHERE   dates <= date_add('${enddate}',15)
                         )    t3
                   ON    date_add(t1.begin_time,t2.days-1) = t3.dates  --关联未来日期金蘑菇兑换比例数值
                WHERE    date_add(t1.begin_time,t2.days-1) IS NOT NULL 
@@ -124,37 +130,41 @@ FULL OUTER JOIN    (
                         ,date_add(t1.begin_time,t3.days-1)         AS dates
                 FROM    (
                          SELECT    act_id
-                                   ,concat_ws('_',activity_type,activity_id1_name)   as name
-                                   ,begin_time as begin_time
-                                   ,end_time   as end_time
+                                   ,trim(concat_ws('_',activity_type,activity_id1_name))   AS name
+                                   ,begin_time AS begin_time
+                                   ,end_time   AS end_time
                                    ,coins_type
                                    ,amount
                                    ,datediff('${enddate}',begin_time)+1  AS days  --活动已开始天数
-                                   ,'${enddate}'               as dates
+                                   ,'${enddate}'               AS dates
                            FROM    qqdz_report.dim_activity_cfg_infos
                           WHERE    end_time > '${enddate}'
                             AND    begin_time < '${enddate}'
                          )    t1
            INNER JOIN    (
-                          SELECT  name
+                          SELECT  trim(a.name)         AS name
+                                  ,trim(b.used_name)   AS used_name
                                   ,chgs
                                   ,amounts
-                                  ,dates as dates
-                            FROM  qqdz_report.daily_act_kpi_consume 
+                                  ,dates
+                            FROM  qqdz_report.daily_act_kpi_consume   AS a
+                       LEFT JOIN   qqdz_report.dim_activity_name_cfg  AS b
+                              ON   trim(a.name) = trim(b.old_name)
                            WHERE  dates=date_add('${enddate}',-1)
                              AND  pay_type = '-1'
                          )    t2
-                   ON    t1.name = t2.name
+                   ON    t1.name = t2.used_name
             LEFT JOIN    (
                           SELECT    act_id,days,coefficient
                             FROM    qqdz_report.dim_activity_cfg_coefficient 
+                           WHERE    act_id IS NOT NULL
                          )    t3
                    ON    t1.act_id = t3.act_id
-                  AND    t1.days < t3.days
+                  AND    t1.days <= t3.days
            INNER JOIN    (
-                        SELECT  rate,dates  AS dates,cause
-                          FROM  qqdz_report.dim_activity_cfg_exchange
-						 WHERE  dates <= date_add('${enddate}',15)
+                          SELECT   rate,dates  AS dates,cause
+                            FROM   qqdz_report.dim_activity_cfg_exchange
+                           WHERE   dates <= date_add('${enddate}',15)
                          )    t4
                    ON    date_add(t1.begin_time,t3.days-1) = t4.dates
           )    t2
@@ -167,3 +177,5 @@ LEFT JOIN    (
              )    t3
         ON    t1.dates = t3.dates
  ORDER BY    COALESCE(t1.dates,t2.dates)  DESC 
+
+
