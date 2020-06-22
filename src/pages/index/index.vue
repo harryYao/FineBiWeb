@@ -11,7 +11,7 @@
             <el-scrollbar>
               <div
                 class="module"
-                :class="{ active: activeId === item.id, new: item.text == '用户之声' }"
+                :class="{ active: activeId === item.id }"
                 v-for="item in game.children"
                 :key="item.id"
                 @click="chooseModule(item)"
@@ -47,19 +47,50 @@
       </el-header>
       <el-container class="down-container">
         <el-aside width="240px">
-          <!-- <div v-if="treeData" style="height:100%;"> -->
-          <el-scrollbar v-if="treeData">
-            <el-tree
-              ref="lefttree"
-              :data="treeData"
-              node-key="id"
-              :current-node-key="currentnode"
-              :props="defaultProps"
-              @node-click="handleNodeClick"
-              @node-expand="handleNodeExpand"
-            ></el-tree>
-          </el-scrollbar>
-          <!-- </div> -->
+          <div class="leftbar">
+            <span class="iconbtn el-icon-menu" :class="{active: leftindex == 1}" title="目录" @click="handleMenuIconClick"></span>
+            <span class="iconbtn el-icon-star-on" :class="{active: leftindex == 2}" title="收藏" @click="leftindex = 2"></span>
+            <el-input
+              class="search-input"
+              placeholder="报表搜索"
+              v-model="keyword" size="mini"
+              @keypress.native.enter="searchMenuList">
+              <el-button slot="append"  size="mini" icon="el-icon-search" @click="searchMenuList"></el-button>
+            </el-input>
+          </div>
+          <div class="left_panel menu_panel" v-if="leftindex == 1">
+            <el-scrollbar v-if="treeData">
+              <el-tree
+                ref="lefttree"
+                :data="treeData"
+                node-key="id"
+                :current-node-key="currentnode"
+                :props="defaultProps"
+                @node-click="handleNodeClick"
+              ></el-tree>
+            </el-scrollbar>
+          </div>
+          <div class="left_panel favorite_panel" v-else-if="leftindex == 2">
+            <el-scrollbar>
+              <p class="title">收藏列表</p>
+              <ul>
+                <li v-for="item in favoritelist" :key="item.id" @click="handleLiClick(item)">
+                  <span :title="getAllPath(item.id)">{{ item.text }}</span>
+                  <span class="el-icon-delete" title="取消收藏" @click.prevent.stop="delFavorite(item.id)"></span>
+                </li>
+              </ul>
+            </el-scrollbar>
+          </div>
+          <div class="left_panel search_panel" v-else-if="leftindex == 3">
+            <el-scrollbar>
+              <p class="title">搜索结果</p>
+              <ul>
+                <li v-for="item in searchresult.filter((f) => { return f.isParent == false && alldata[f.id]} )" :key="item.id" :title="getAllPath(item.id)" @click="handleLiClick(item)">
+                  <span :title="getAllPath(item.id)">{{ item.text }}</span>
+                </li>
+              </ul>
+            </el-scrollbar>
+          </div>
         </el-aside>
         <el-main>
           <el-tabs
@@ -78,14 +109,14 @@
               <span slot="label">
                 <el-popover
                   placement="bottom"
-                  width="80"
                   trigger="hover"
                   :popper-class="'tab-refresh'"
                   :open-delay="500"
                   :disabled="editableTabsValue != item.name"
                 >
                   <div class="refrash-btn" @click="refreshIframe(item)">刷新</div>
-                  <el-button class="tabtitle" slot="reference">
+                  <div class="refrash-btn favorite-btn" @click="addToFavorite(item)">收藏</div>
+                  <el-button class="tabtitle" slot="reference" :title="item.title">
                     <i class="el-icon-s-home" v-if="index == 0"></i>
                     {{ item.title }}
                   </el-button>
@@ -124,8 +155,8 @@
 </template>
 
 <script>
-import { mapState, createNamespacedHelpers } from "vuex";
 import axios from "axios";
+import { mapState, createNamespacedHelpers } from "vuex";
 import jsonp from "../../service/jsonp";
 import service from "../../service/index";
 import { jsonToTree } from "../../utils/utils";
@@ -154,7 +185,11 @@ export default {
       editableTabs: [],
       editableTabsValue: "home",
       timeList: [],
-      timer: null
+      timer: null,
+      keyword: '',
+      leftindex: 1,
+      favoritelist: [],
+      searchresult: []
     };
   },
   created() {
@@ -175,7 +210,8 @@ export default {
     }
     this.getMenuList();
   },
-  components: {},
+  components: {
+  },
   computed: {
     ...mapState(["token", "username"])
   },
@@ -185,16 +221,10 @@ export default {
     });
   },
   watch: {
-    // // 监控tab切换
-    // editableTabsValue(newval) {
-    //   const item = this.editableTabs.find(item => {
-    //     return item.name === newval;
-    //   });
-    //   // console.log(item);
-    //   if (item && item.paths && item.paths.length > 1) {
-    //     this.expandedTreeNode(item.paths, newval);
-    //   }
-    // }
+    // 监控tab切换
+    editableTabsValue(newval) {
+      this.handleExpandNode(newval);
+    }
   },
   methods: {
     gotoHomePage() {
@@ -233,55 +263,77 @@ export default {
      * 添加tab页面
      */
     addTab(text, url, id) {
-      const item = this.editableTabs.find(item => {
-        return item.name === id;
-      });
-      const paths = [];
-      if (!item) {
-        // this.findPath(id, paths);
-        this.editableTabs.push({
-          title: text,
-          name: id,
-          url: url,
-          loading: true,
-          paths: paths
+      if (id) {
+        const item = this.editableTabs.find(item => {
+          return item.name === id;
         });
-      } 
-      this.editableTabsValue = id;
-      this.$router.replace(`/?page=${id}&title=${text}`).catch(err => {
-        err;
-      });
-      
+        const paths = [];
+        if (!item) {
+          this.findPath(id, paths);
+          this.editableTabs.push({
+            title: text,
+            name: id,
+            url: url,
+            loading: true,
+            paths: paths
+          });
+        } 
+        this.editableTabsValue = id;
+        this.$router.replace(`/?page=${id}&title=${text}`).catch(err => {
+          err;
+        });
+      }
+    },
+    handleLiClick(item) {
+      console.log(item)
+      this.addTab(item.text, this.getIFrameSrc(item.id), item.id)
+    },
+    handleMenuIconClick() {
+      this.leftindex = 1;
+      this.$nextTick(() => {
+        this.handleExpandNode(this.editableTabsValue);
+      })
+    },
+    handleExpandNode(id) {
+      if (this.leftindex  == 1) {
+        const item = this.editableTabs.find(item => {
+          return item.name === id;
+        });
+        if (item && item.paths && item.paths.length > 1) {
+          this.expandedTreeNode(item.paths, id);
+        }
+      }
     },
     /** 自动展开树节点 */
     expandedTreeNode(paths, id) {
-      console.log('expandedTreeNode:',paths, id);
+      // console.log('expandedTreeNode:',paths, id);
       try {
-        if (this.editableTabs.length > 1 && paths.length > 1) {
+        if (paths.length > 1) {
           const game = paths[0];
-          const module = paths[1];
-          this.game = this.result.find(item => {
-            return item.id === game.id;
-          });
-          this.activeId = module.id;
-          const temp = this.game.children.find((c) => {
-            return c.id == module.id;
-          })
-          this.treeData = temp.children;
-          this.gameid = game.id;
-
-          this.$nextTick(() => {
-            if (paths.length > 3) {
-              this.$refs['lefttree'].store.nodesMap[paths[paths.length - 1].pId].expanded = true;
-              if (paths.length > 4) {
-                this.$refs['lefttree'].store.nodesMap[paths[paths.length - 2].pId].expanded = true;
-                if (paths.length > 5) {
-                  this.$refs['lefttree'].store.nodesMap[paths[paths.length - 3].pId].expanded = true;
+          if (game.id != 'decision-directory-root') {            
+            const module = paths[1];
+            this.game = this.result.find(item => {
+              return item.id === game.id;
+            });
+            this.activeId = module.id;
+            const temp = this.game.children.find((c) => {
+              return c.id == module.id;
+            })
+            this.treeData = temp.children;
+            this.gameid = game.id;
+            this.$nextTick(() => {
+              if (paths.length > 3) {
+                this.$refs['lefttree'].store.nodesMap[paths[paths.length - 1].pId].expanded = true;
+                if (paths.length > 4) {
+                  this.$refs['lefttree'].store.nodesMap[paths[paths.length - 2].pId].expanded = true;
+                  if (paths.length > 5) {
+                    this.$refs['lefttree'].store.nodesMap[paths[paths.length - 3].pId].expanded = true;
+                  }
                 }
               }
-            }
-            this.$refs['lefttree'].setCurrentKey(id);
-          })
+              this.$refs['lefttree'].setCurrentKey(id);
+            })
+          }
         }
       } catch (error) {
         console.error(error)
@@ -303,6 +355,7 @@ export default {
     },
     /** 刷新页面 */
     refreshIframe(item) {
+      item.loading = true;
       document
         .getElementById(`iframe_${item.name}`)
         .contentWindow.location.reload(true);
@@ -345,40 +398,35 @@ export default {
       }
     },
     /**
-     * 切换一级目录或者二级目录时，自动开发配置的页面，已经打开则切换tab到该页面
+     * 切换一级目录或者二级目录时，自动打开配置的页面，已经打开则切换tab到该页面
      */
     activeTheDefaultPage(mainid) {
-      // 查询当前哪个节点
-      let nodes = [];
-      this.getNode(this.result, mainid, nodes);
-      // console.log(nodes);
-      if (nodes && nodes.length > 0) {
-        let node = nodes[0];
-        const item = this.editableTabs.find(item => {
-          return item.name === node.id;
-        });
-        if (item) {
-          this.editableTabsValue = mainid;
-          this.$router
-            .replace(`/?page=${node.id}&title=${node.text}`)
-            .catch(err => {
-              err;
-            });
-        } else {
-          this.addTab(node.text, this.getIFrameSrc(node.id), node.id);
-        }
+      const item = this.editableTabs.find(item => {
+        return item.name === mainid;
+      });
+      if (item) {
+        this.editableTabsValue = mainid;
+        this.$router
+          .replace(`/?page=${item.name}&title=${item.label}`)
+          .catch(err => {
+            err;
+          });
+      } else {
+        let node = this.alldata[mainid]
+        this.addTab(node.text, this.getIFrameSrc(node.id), node.id);
       }
     },
-    /** 根据id获取节点 （尾递归）*/
-    getNode(list, mainid, result) {
-      for (let index = 0; index < list.length; index++) {
-        if (list[index].children && list[index].children.length > 0) {
-          this.getNode(list[index].children, mainid, result);
-        } else {
-          if (list[index].id == mainid) {
-            result.push(list[index]);
+    getAllNodes(node, result) {
+      if (node.isParent) {
+        result[node.id] = node;
+        if (node.children) {
+          for (let i = 0; i < node.children.length; i++) {
+            const temp = node.children[i];
+            this.getAllNodes(temp, result)
           }
         }
+      } else {
+        result[node.id] = node;
       }
     },
     /** 获取地址 */
@@ -388,7 +436,7 @@ export default {
       }
       return "";
     },
-    // 选择模块
+    /** 选择模块 */
     chooseModule(item) {
       this.activeId = item.id;
       this.treeData = item.children;
@@ -401,16 +449,17 @@ export default {
       });
       this.activeTheDefaultPage(dd.mainid);
     },
-    // 选择节点
+    /** 选择节点 */
     handleNodeClick(data) {
       if (data.isParent) {
         return;
       }
       this.addTab(data.text, this.getIFrameSrc(data.id), data.id);
     },
-    // 树节点打开
-    handleNodeExpand(node) {},
-    // 登出
+    /** 树节点打开事件 */
+    handleNodeExpand(node) {
+    },
+    // 登出按钮
     handleCommand(command) {
       if (command === "logout") {
         clearInterval(this.timer);
@@ -439,7 +488,7 @@ export default {
     },
     reLogin() {
       this.$store.commit("setToken", "");
-      if (this.$route.query.page) {
+      if (this.$route.query && this.$route.query.page && this.$route.query.page != 'undefined') {
         this.$router
           .replace(
             `/login?page=${this.$route.query.page}&title=${this.$route.query.title}`
@@ -453,7 +502,7 @@ export default {
         });
       }
     },
-    // 配置一级菜单图标
+    /** 配置一级菜单图标 */
     getGameIcon(name) {
       const list = {
         球球大作战: "qiuqiu.png",
@@ -461,6 +510,7 @@ export default {
       };
       return list[name] ? list[name] : "default.png";
     },
+    /** 缓存下全部节点 key-value */
     parseAllData(data) {
       try {
         let temp = JSON.parse(JSON.stringify(data));
@@ -471,20 +521,33 @@ export default {
         }
         this.alldata = ret;
       } catch (error) {
-        
+        console.log(error)
       }
     },
+    /** 寻找某个页面全路径 */
     findPath(id, list) {
       const cur = this.alldata[id];
-      list.unshift(cur);
-      if (cur.pId && cur.text != '球球大作战' && cur.text != '嘿嘿语音') {
-        // console.log('继续查找');
-        this.findPath(cur.pId, list);
-      } else {
-        return false;
+      if (cur) {
+        list.unshift(cur);
+        if (cur.pId && cur.text != '球球大作战' && cur.text != '嘿嘿语音') {
+          // console.log('继续查找');
+          this.findPath(cur.pId, list);
+        } else {
+          return false;
+        }
       }
     },
-    // 查询全部菜单
+    getAllPath(id) {
+      const list = []
+      this.findPath(id, list);
+      const temp = [];
+      for (let i = 0; i < list.length; i++) {
+        const element = list[i];
+        temp.push(element.text);
+      }
+      return temp.join(' > ');
+    },
+    /** 查询全部菜单 */
     getMenuList() {
       // '/v10/{directoryId}/entries/{privilegeType}'
       // service.get(`/v10/decision-directory-root/entries?fine_auth_token=${this.token}`)
@@ -495,13 +558,13 @@ export default {
             this.reLogin();
           }
           if (data) {
-            this.parseAllData(data);
-            this.getHomePage();
+            // this.parseAllData(data);
             const result = jsonToTree(data, "id", "pId");
             const temp = result.find(item => {
               return item.id === "decision-directory-root";
             });
             this.result = temp.children;
+            const allnodes = {};
             for (let index = 0; index < this.result.length; index++) {
               const element = this.result[index];
               // this.games.push({ text: element.text, id: element.id });
@@ -510,18 +573,53 @@ export default {
                 this.games.push({ text: element.text, id: element.id });
                 this.gameid = element.id;
                 this.selectGame(element.id, true);
+                this.getAllNodes(element, allnodes);
               }
               if (element.text === "嘿嘿语音") {
                 this.games.push({ text: element.text, id: element.id });
+                this.getAllNodes(element, allnodes);
               }
             }
+            let cc = 0
+            for (const key in allnodes) {
+              if (allnodes.hasOwnProperty(key)) {
+                const element =  allnodes[key];
+                cc++;
+              }
+            }
+            console.log('alldata:', cc)
+            this.alldata = allnodes;
+            this.getHomePage();
+            this.getFavoriteList();
           }
         })
         .catch(error => {
           console.error(error);
         });
     },
-    // 查询首页
+    getMenuListById() {
+      const id = '98eeccaf-798d-4ec8-bd0d-9ceae09cbc61';
+      service
+        .get(`/v10/${id}/entries?fine_auth_token=${this.token}`)
+        .then(data => {
+          console.log(data);
+        })
+        .catch(error => {
+          console.error(error);
+        });
+    },
+    /** 收藏列表 */
+    getFavoriteList() {
+      service
+        .get(`/v10/favorite/entry/list?fine_auth_token=${this.token}`)
+        .then(data => {
+          this.favoritelist = data;
+        })
+        .catch(error => {
+          console.error(error);
+        });
+    },
+    /** 查询首页 */
     getHomePage() {
       // /v10/homepages{privilegeType} 取具有特定权限的首页 权限类型 1:查看 2:授权 3:编辑
       // /v10/homepages 获取全部首页
@@ -531,43 +629,24 @@ export default {
           if (data) {
             if (data && data.length > 0) {
               const item = data[0];
-              let src = "";
-              // cpt，frm报表的路径不同
-              if (
-                item.pcHomePage.lastIndexOf(".cpt") ===
-                item.pcHomePage.length - 4
-              ) {
-                src = `${this.baseapi}/view/report?viewlet=${encodeURIComponent(
-                  item.pcHomePage
-                )}`;
-                // } else if (item.pcHomePage.lastIndexOf('.frm') === item.pcHomePage.length - 4) {
-              } else {
-                src = this.getIFrameSrc(item.pcHomePage);
-              }
-
+              let src = this.getIFrameSrc(item.pcHomePage);
+              item.id = item.pcHomePage;
+              item.text = item.pcHomePageText;
+              this.alldata[item.id] = item;
               // 逻辑改为 存在url地址的话，就不打开首页。
               if (this.$route.query && this.$route.query.page) {
-                this.addQueryPage(
-                  this.$route.query.page,
-                  this.$route.query.title
-                );
+                this.addQueryPage(this.$route.query.page, this.$route.query.title);
               } else {
                 this.addTab(item.pcHomePageText, src, item.pcHomePage);
               }
             } else {
               if (this.$route.query && this.$route.query.page) {
-                this.addQueryPage(
-                  this.$route.query.page,
-                  this.$route.query.title
-                );
+                this.addQueryPage(this.$route.query.page, this.$route.query.title);
               }
             }
           } else {
             if (this.$route.query && this.$route.query.page) {
-              this.addQueryPage(
-                this.$route.query.page,
-                this.$route.query.title
-              );
+              this.addQueryPage(this.$route.query.page, this.$route.query.title);
             }
           }
         })
@@ -575,9 +654,49 @@ export default {
           console.error(error);
         });
     },
-    addQueryPage(id, title) {
-      this.addTab(title || "NEWPAGE", this.getIFrameSrc(id), id);
+    /** 添加收藏 */
+    addToFavorite(item) {
+      // /v10/favorite/entry/{entryId}
+      service
+        .post(`/v10/favorite/entry/${item.name}?fine_auth_token=${this.token}`)
+        .then(data => {
+          console.log(data);
+          this.$message.success("收藏成功！")
+          this.getFavoriteList();
+        })
+        .catch(error => {
+          console.error(error);
+        });
     },
+    /** 添加收藏 */
+    delFavorite(id) {
+      // /v10/favorite/entry/{entryId}
+      service
+        .delete(`/v10/favorite/entry/${id}?fine_auth_token=${this.token}`)
+        .then(data => {
+          console.log(data);
+          this.$message.success("取消成功！")
+          this.getFavoriteList();
+        })
+        .catch(error => {
+          console.error(error);
+        });
+    },
+    /** 目录搜索结果 */
+    searchMenuList() {
+      this.leftindex = 3;
+      if (this.keyword) {
+        service
+          .get(` /v10/entry/list?keyword=${this.keyword}&fine_auth_token=${this.token}`)
+          .then(data => {
+            this.searchresult = data;
+          })
+          .catch(error => {
+            console.error(error);
+          });
+      }
+    },
+     /** 获取通知信息 */
     getNotice() {
       axios
         .get(process.env.AssetsPublicPath + "static/config/notice.json")
@@ -586,6 +705,9 @@ export default {
           if (result.notices && result.notices.length > 0) {
             for (let index = 0; index < result.notices.length; index++) {
               const element = result.notices[index];
+              if (element.endtime && new Date() > new Date(element.endtime)) {
+                continue;
+              }
               setTimeout(() => {
                 this.$notify({
                   title: element.title,
@@ -594,10 +716,16 @@ export default {
                   duration: element.duration,
                   offset: 40
                 });
-              }, (index + 2) * 1500);
+              }, (index + 3) * 1500);
             }
           }
         });
+    },
+    addQueryPage(id, title) {
+      this.addTab(title || "NEWPAGE", this.getIFrameSrc(id), id);
+      this.$nextTick(() => {
+        this.handleExpandNode(id);
+      })
     }
   }
 };
@@ -612,9 +740,13 @@ export default {
   
   .refrash-btn {
     cursor: pointer;
-    line-height: 30px;
+    line-height: 36px;
+    padding: 0 10px;
     &:hover {
       color: lighten(#5d89fe, 5%);
+    }
+    &:first-child {
+      border-bottom: 1px solid #ededed;
     }
   }
 }
@@ -799,34 +931,122 @@ export default {
       color: #ededed;
       text-align: center;
       height: 100%;
-      padding-bottom: 30px;
+      position: relative;
       &::-webkit-scrollbar {
         width: 0;
       }
-      /deep/.el-scrollbar__bar.is-vertical {
-        background-color: fade(#ababab, 20%);
-      }
-      /deep/.el-tree {
-        background-color: @bgwhite;
-        color: @mainfont;
-        .el-tree-node__content {
-          height: 40px;
+      .leftbar {
+        width: 100%;
+        padding: 5px;
+        display: flex;
+        z-index: 20;
+        height: 38px;
+        .iconbtn {
+          padding: 2px;
+          width: 28px;
+          height: 28px;
+          color: #B2D4E6;
+          font-size: 24px;
+          cursor: pointer;
+          transition: all 0.3s;
           &:hover {
-            color: fade(@mainColor, 80%);
-            background-color: #ffffff;
+            color: #82A4C6;
+          }
+          &.active {
+            color: #7294b6;
           }
         }
-        .el-tree-node.is-current {
-          > .el-tree-node__content {
+        /deep/.search-input {
+          .el-input-group__append {
+            padding: 0 12px;
+          }
+        }
+      }
+      .left_panel {
+        height: calc(100% - 38px);
+        
+        p.title {
+          color: #c3c3c3;
+          text-align: left;
+          padding-left: 10px;
+          line-height: 30px;
+          height: 30px;
+        }
+        /deep/.el-scrollbar {
+          height: 100%;
+          .el-scrollbar__wrap {
+            height: calc(100% + 17px);
+          }
+        }
+        /deep/.el-scrollbar__bar.is-vertical {
+          background-color: fade(#ababab, 20%);
+        }
+        /deep/.el-tree {
+          background-color: @bgwhite;
+          color: @mainfont;
+          .el-tree-node__content {
+            height: 40px;
+            transition: all 0.3s;
+            &:hover {
+              color: fade(@mainColor, 80%);
+              background-color: #ffffff;
+            }
+          }
+          .el-tree-node.is-current {
+            > .el-tree-node__content {
+              color: @mainColor;
+              background-color: #ffffff;
+              font-weight: bold;
+              border-left: 4px solid;
+            }
+          }
+          .el-tree-node:focus > .el-tree-node__content {
             color: @mainColor;
             background-color: #ffffff;
-            font-weight: bold;
-            border-left: 4px solid;
           }
         }
-        .el-tree-node:focus > .el-tree-node__content {
-          color: @mainColor;
-          background-color: #ffffff;
+      }
+      .favorite_panel, .search_panel {
+        ul {
+          padding-left: 10px;
+          li {
+            padding-left: 10px;
+            cursor: pointer;
+            text-align: left;
+            background-color: @bgwhite;
+            color: @mainfont;
+            height: 40px;
+            line-height:40px;
+            border-top: 1px solid #efefef;
+            position: relative;
+            transition: all 0.2s;
+            &:first-child {
+              border-top: none;
+            }
+            .el-icon-delete {
+              display: none;
+            }
+            &:hover {
+              color: fade(@mainColor, 80%);
+              background-color: #ffffff;
+              .el-icon-delete {
+                display: block;
+                position: absolute;
+                right: 10px;
+                top:10px;
+                height: 20px;
+                width: 20px;
+                font-size: 14px;
+                text-align: center;
+                padding: 3px;
+                color: #cdcdcd;
+                transition: all 0.2s;
+                &:hover {
+                  color: @mainColor;
+                }
+              }
+            }
+          }
         }
       }
     }
@@ -850,12 +1070,14 @@ export default {
             border-bottom: 1px solid #e4e7ed;
             padding: 0 5px;
             width: 150px;
+            transition: all 0.2s;
             &:hover {
               color: lighten(@mainColor, 10%);
             }
             .el-icon-close {
               text-align: center;
               margin-left: 0px;
+              line-height: 14px;
               &::before {
                 transform: scale(1);
               }
@@ -886,6 +1108,9 @@ export default {
             .el-tabs__nav-next, .el-tabs__nav-prev {
               line-height: 30px;
               font-size: 20px;
+              &:hover {
+                color: @mainColor;
+              }
             }
           }
         }
@@ -893,6 +1118,7 @@ export default {
           height: calc(100% - 30px) !important;
           min-height: 400px;
           .el-tab-pane {
+            min-height: 400px;
             height: 100%;
           }
         }

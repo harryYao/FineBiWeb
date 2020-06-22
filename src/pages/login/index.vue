@@ -165,6 +165,7 @@ export default {
             vertical-align: middle;
             background-image: url('../../../static/logo_w.png');
             background-size: 100% 100%;
+            transition: all 0.3s;
           }
         }
       }

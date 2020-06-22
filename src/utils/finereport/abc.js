@@ -93,3 +93,19 @@ enddate.setValue(new Date(mld));
 
 
 
+
+<span>回流用户数</span><span style="display: inline-block;line-height: 14px;color: #999;text-align: center;font-size: 12px;border-radius: 50%;height: 14px;width: 14px;border: 1px solid;transform: scale(0.75);">?</span>
+CONCATENATE("<span style='vertical-align: middle;'>"+$$$+"</span><span style='display: inline-block;line-height: 14px;color: #999;text-align: center;font-size: 12px;border-radius: 50%;height: 14px;width: 14px;border: 1px solid;transform: scale(0.75);'>?</span>",(IF(asc == CONCATENATE(CHAR(COL($$$)+64),row($$$)+1), IF(a == 0, "<img style='vertical-align: middle;width:16px;height:16px;margin-left:2px;' src='http://bob.ztgame.com/bi/static/sort_desc.png'/>", "<img style='vertical-align: middle;width:16px;height:16px;margin-left:2px;' src='http://bob.ztgame.com/bi/static/sort_asc.png'/>"), "<img style='vertical-align: middle;width:16px;height:16px;margin-left:2px;' src='http://bob.ztgame.com/bi/static/sort_default.png'/>")))
+=IF(asc == CONCATENATE(CHAR(COL($$$)+64),row($$$)+1), IF(a == 0, "<span style='vertical-align: middle;'>"+$$$+"</span><img style='vertical-align: middle;width:16px;height:16px;margin-left:2px;' src='http://bob.ztgame.com/bi/static/sort_desc.png'/>", "<span style='vertical-align: middle;'>"+$$$+"</span><img style='vertical-align: middle;width:16px;height:16px;margin-left:2px;' src='http://bob.ztgame.com/bi/static/sort_asc.png'/>"), "<span style='vertical-align: middle;'>"+$$$+"</span><img style='vertical-align: middle;width:16px;height:16px;margin-left:2px;' src='http://bob.ztgame.com/bi/static/sort_default.png'/>")
+
+
+
+setTimeout(function() {
+	$("td[id^=E1-]").attr("title","统计日当天活跃，前推30天内未活跃的用户");
+	$("td[id^=F1-]").attr("title","上一次活跃日期到统计日当天的时间差在31-60天");
+	$("td[id^=G1-]").attr("title","上一次活跃日期到统计日当天的时间差在61-90天");
+	$("td[id^=H1-]").attr("title","上一次活跃日期到统计日当天的时间差在91-120天");
+	$("td[id^=I1-]").attr("title","上一次活跃日期到统计日当天的时间差在121天以上");
+}, 600);
+所有回流用户数	月流失回流用户	双月流失回流用户	三月流失回流用户	三月以上流失回流用户
+回流用户数	付费用户数	付费渗透率	付费金额（元）	付费用户人均付费金额(元)
