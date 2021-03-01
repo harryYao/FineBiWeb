@@ -9,11 +9,10 @@ module.exports = {
 
     // Paths
     assetsSubDirectory: 'static',
-    // assetsPublicPath: '/webroot/',
     assetsPublicPath: '/',
     proxyTable: {
       "/webroot/decision": {
-        target: "http://bob.ztgame.com",
+        target: "https://bob.ztgame.com",
         changeOrigin: true
       }      
     },
@@ -44,6 +43,7 @@ module.exports = {
   test: {
     // Template for index.html
     index: path.resolve(__dirname, '../test/index.html'),
+    mobile: path.resolve(__dirname, '../test/mobile.html'),
 
     // Paths
     assetsRoot: path.resolve(__dirname, '../test'),
@@ -74,11 +74,13 @@ module.exports = {
   build: {
     // Template for index.html
     index: path.resolve(__dirname, '../dist/index.html'),
+    mobile: path.resolve(__dirname, '../dist/mobile.html'),
 
     // Paths
     assetsRoot: path.resolve(__dirname, '../dist'),
     assetsSubDirectory: 'static',
     assetsPublicPath: '/webroot/',
+    // assetsPublicPath: '/',
 
     /**
      * Source Maps

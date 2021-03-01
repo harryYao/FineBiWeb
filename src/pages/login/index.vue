@@ -15,7 +15,6 @@
             <i class="icon el-icon-user"></i>
             <input name="username" type="text" placeholder="用户名" v-model="username">
           </div>
-          
         </div>
         <div class="item">
           <div class="input-item">
@@ -25,7 +24,6 @@
         </div>
         <div class="item">
           <el-checkbox v-model="keepname" class="keepname">记住用户名</el-checkbox>
-          <!-- <el-checkbox v-model="checked">保持登录状态</el-checkbox> -->
         </div>
         <div class="item">
           <button class="btn-commit" @click="login">登录</button>
@@ -36,17 +34,18 @@
 </template>
 
 <script>
-import service from '../../service/index'
+import service from '../../service/index';
+
 export default {
   name: '',
-  data () {
+  data() {
     return {
       test: '登陆页面',
       username: '',
       password: '',
       token: '',
       checked: true,
-      keepname: true
+      keepname: true,
     };
   },
   created() {
@@ -54,7 +53,7 @@ export default {
   components: {},
   computed: {
   },
-  mounted () {
+  mounted() {
     // console.log('this.$store.state.keepname', this.$store.state.keepname);
     this.keepname = this.$store.state.keepname || (this.$store.state.keepname === undefined);
     if (this.$store.state.keepname) {
@@ -64,11 +63,11 @@ export default {
   methods: {
     check() {
       if (!this.username) {
-        this.$message.error('请输入用户名!')
+        this.$message.error('请输入用户名!');
         return false;
       }
       if (!this.password) {
-        this.$message.error('请输入密码!')
+        this.$message.error('请输入密码!');
         return false;
       }
       return true;
@@ -78,42 +77,42 @@ export default {
         service.post('/login', {
           username: this.username,
           password: this.password,
-          validity: -2
+          validity: -2,
         })
-        .then((data) => {
-          console.info(data);
-          if (data.accessToken) {
-            this.token = data.accessToken;
-            this.$store.commit('setToken', data.accessToken);
-            this.$store.commit('setUserName', data.username);
-            this.$store.commit('setKeepName', this.keepname);
-            if (this.$route.query && this.$route.query.page) {
-              this.$router.replace(`/?page=${this.$route.query.page}&title=${this.$route.query.title}`);
-            } else {
-              this.$router.push('/');
+          .then((data) => {
+            if (data.accessToken) {
+              this.token = data.accessToken;
+              this.$store.commit('setToken', data.accessToken);
+              this.$store.commit('setUserName', data.username);
+              this.$store.commit('setKeepName', this.keepname);
+              if (this.$route.query && this.$route.query.page) {
+                this.$router.replace(`/?page=${this.$route.query.page}&title=${this.$route.query.title}`);
+              } else {
+                this.$router.push('/');
+              }
+            } else if (data.errorCode) {
+              if (data.errorCode === '22400002') {
+                this.$message.error('用户不存在！');
+              } else if (data.errorCode === '21300007') {
+                this.$message.error('用户不存在或密码错误！');
+              } else {
+                this.$message.error(data.errorMsg);
+              }
             }
-          } else if(data.errorCode){
-            if (data.errorCode === '22400002') {
-              this.$message.error('用户不存在！')
-            } else if (data.errorCode === '21300007') {
-              this.$message.error('用户不存在或密码错误！')
-            } else {
-              this.$message.error(data.errorMsg)
-            }
-          }
-        })
-        .catch((error) => {
-          console.log(error);
-          // this.$message.error(error.errorMsg)
-        });
+          })
+          .catch((error) => {
+            console.error(error);
+            // this.$message.error(error.errorMsg);
+          });
       }
-    }
-  }
-}
+    },
+  },
+};
 </script>
 
 <style lang='less' scoped>
-@mainColor: #5D89FE;
+// @mainColor: #5d89fe;
+@mainColor: #47a8ea;
 
 .login-container {
   position: absolute;
@@ -138,9 +137,9 @@ export default {
       right: 270px;
       top: 0;
       bottom: 0;
-      background-image: url('../../../static/login_bg.png');
+      background-image: url('../../../static/imgs/login_bg.jpg');
       background-position: center;
-      background-size: cover; 
+      background-size: cover;
       .left-inner {
         left: 0px;
         right: 0px;
@@ -163,7 +162,7 @@ export default {
             height: 28px;
             display: inline-block;
             vertical-align: middle;
-            background-image: url('../../../static/logo_w.png');
+            background-image: url('../../../static/imgs/logo_w.png');
             background-size: 100% 100%;
             transition: all 0.3s;
           }
@@ -227,6 +226,15 @@ export default {
         }
         .keepname {
           margin-bottom: 10px;
+        }
+        .spbtn {
+          border: none;
+          background: none;
+          outline: none;
+          color: #999;
+          &.active {
+            color: @mainColor;
+          }
         }
         .btn-commit {
           margin-top: 10px;

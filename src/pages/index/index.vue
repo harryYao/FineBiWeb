@@ -1,7 +1,7 @@
 <template>
   <div class="main-container">
     <el-container>
-      <el-header height="50px">
+      <el-header height="40px">
         <div class="logo-name" @click="gotoHomePage">
           <span class="logo"></span>
           <span class="text">商业智能报表</span>
@@ -22,18 +22,28 @@
         <div class="right">
           <el-select v-model="gameid" placeholder="请选择" @change="selectGame">
             <el-option v-for="item in games" :key="item.id" :label="item.text" :value="item.id">
-              <span
-                class="icon"
-                :style="{backgroundImage: `url('/webroot/static/gamesicon/${getGameIcon(item.text)}')`}"
-              ></span>
+              <!-- <span class="icon" :style="{backgroundImage: `url('/webroot/static/gamesicon/${getGameIcon(item.text)}')`}"></span> -->
+              <span class="icon" :style="{backgroundImage: `url('http://bob.ztgame.com/webroot/static/gamesicon/${iconlist[item.text]}')`}"></span>
               <span class="text">{{ item.text }}</span>
             </el-option>
           </el-select>
-          <span
-            class="gameicon"
-            v-if="game"
-            :style="{backgroundImage: `url('/webroot/static/gamesicon/${getGameIcon(game.text)}')`}"
-          ></span>
+          <!-- <span class="gameicon" v-if="game" :style="{backgroundImage: `url('/webroot/static/gamesicon/${getGameIcon(game.text)}')`}"></span> -->
+          <span class="gameicon" v-if="game" :style="{backgroundImage: `url('http://bob.ztgame.com/webroot/static/gamesicon/${iconlist[game.text]}')`}"></span>
+          <el-popover
+            placement="top-start"
+            width="200"
+            trigger="hover">
+            <div class="ercode-div">
+              <div class="title" style="padding: 4px 0 6px 0;">
+                <p style="font-size: 16px;"><b>智能报表</b></p>
+                <p>V1.0.4（2020-12-16）</p>
+              </div>
+              <img src="../../../static/imgs/app_download.png" alt="">
+            </div>
+            <div slot="reference" style="cursor:default; font-weight: bold; width: 60px;float: left;margin-left: 8px; color: #fff;">
+              <i class="el-icon-mobile" style="font-size: 20px;position: relative; bottom: -3px;"/>APP
+            </div>
+          </el-popover>
           <el-dropdown @command="handleCommand">
             <span class="el-dropdown-link">
               {{ username }}
@@ -50,13 +60,19 @@
           <div class="leftbar">
             <span class="iconbtn el-icon-menu" :class="{active: leftindex == 1}" title="目录" @click="handleMenuIconClick"></span>
             <span class="iconbtn el-icon-star-on" :class="{active: leftindex == 2}" title="收藏" @click="leftindex = 2"></span>
-            <el-input
-              class="search-input"
-              placeholder="报表搜索"
-              v-model="keyword" size="mini"
-              @keypress.native.enter="searchMenuList">
-              <el-button slot="append"  size="mini" icon="el-icon-search" @click="searchMenuList"></el-button>
-            </el-input>
+            <el-autocomplete
+              class="inline-input"
+              v-model="keyword"
+              size="mini"
+              :fetch-suggestions="querySearch"
+              placeholder="请输入内容"
+              :trigger-on-focus="false"
+              @select="handleLiClick"
+            >
+              <template slot-scope="{ item }">
+                <div :title="getAllPath(item.id)" class="addr">{{ item.text }}</div>
+              </template>
+            </el-autocomplete>
           </div>
           <div class="left_panel menu_panel" v-if="leftindex == 1">
             <el-scrollbar v-if="treeData">
@@ -67,6 +83,7 @@
                 :current-node-key="currentnode"
                 :props="defaultProps"
                 @node-click="handleNodeClick"
+                :accordion="false"
               ></el-tree>
             </el-scrollbar>
           </div>
@@ -85,7 +102,7 @@
             <el-scrollbar>
               <p class="title">搜索结果</p>
               <ul>
-                <li v-for="item in searchresult.filter((f) => { return f.isParent == false && alldata[f.id]} )" :key="item.id" :title="getAllPath(item.id)" @click="handleLiClick(item)">
+                <li v-for="item in searchresult.filter((f) => { return f.isParent == false && searchRange[f.id]} )" :key="item.id" :title="getAllPath(item.id)" @click="handleLiClick(item)">
                   <span :title="getAllPath(item.id)">{{ item.text }}</span>
                 </li>
               </ul>
@@ -111,20 +128,24 @@
                   placement="bottom"
                   trigger="hover"
                   :popper-class="'tab-refresh'"
-                  :open-delay="500"
+                  :open-delay="1500"
                   :disabled="editableTabsValue != item.name"
                 >
-                  <div class="refrash-btn" @click="refreshIframe(item)">刷新</div>
+                  <!-- <div class="refrash-btn" @click="refreshIframe(item)">刷新</div> -->
                   <div class="refrash-btn favorite-btn" @click="addToFavorite(item)">收藏</div>
-                  <el-button class="tabtitle" slot="reference" :title="item.title">
-                    <i class="el-icon-s-home" v-if="index == 0"></i>
-                    {{ item.title }}
-                  </el-button>
+                  <div class="tabtitle" slot="reference" >
+                    <i class="refrash-i el-icon-refresh"
+                      @click="refreshIframe(item)"
+                    />
+                    <el-button class="" :title="item.title">
+                      {{ item.title }}
+                    </el-button>
+                  </div>
                 </el-popover>
               </span>
-              <div class="container" v-loading="item.loading" style="width:100%;height:100%;min-height: 400px;">
+              <div class="container" v-loading="item.loading && item.pageType !== Enums.pageType.VuePage" style="width:100%;height:100%;min-height: 400px;">
               <!-- <div class="container" style="width:100%;height:100%;"> -->
-                <iframe
+                <iframe v-if="item.pageType !== Enums.pageType.VuePage"
                   :name="`iframe_${item.name}`"
                   :id="`iframe_${item.name}`"
                   :src="item.url"
@@ -134,6 +155,11 @@
                   style="min-height: 400px;"
                   @load="iframeLoaded(item)"
                 ></iframe>
+                <div class="vuePageContainer" v-else>
+                  <keep-alive v-if="vuePages[item.name]">
+                    <router-view />
+                  </keep-alive>
+                </div>
               </div>
             </el-tab-pane>
           </el-tabs>
@@ -155,55 +181,75 @@
 </template>
 
 <script>
-import axios from "axios";
-import { mapState, createNamespacedHelpers } from "vuex";
-import jsonp from "../../service/jsonp";
-import service from "../../service/index";
-import { jsonToTree } from "../../utils/utils";
-import config from "../../utils/config";
+import axios from 'axios';
+import { mapState } from 'vuex';
+import Settings from '@/config/settings';
+// import jsonp from "../../service/jsonp";
+import service from '../../service/index';
+import { jsonToTree2 } from '../../utils/utils';
+import config from '../../utils/config';
+
+const { vuePagePaths } = Settings;
 
 export default {
-  name: "",
+  name: '',
   data() {
     return {
+      // 用于控制reloading
+      // eg 319ff229-5f85-4ad2-9b37-c502595c29cf: true, 当设为flase之后再设为true实现指定router-view 重新加载
+      // add tab之后设置初始值
+      vuePages: {
+
+      },
+      menu: ['球球大作战', '嘿嘿语音', '球球测试服', '球球派对', '球球海外版'],
+      iconlist: {
+        球球大作战: 'qiuqiu.png',
+        嘿嘿语音: 'heyhey.png',
+        球球测试服: 'qiuqiu.png',
+        球球派对: 'qiuqiupaidui.png',
+        球球海外版: 'qiuqiu.png',
+      },
       baseapi: process.env.BASE_API,
-      test: "首页",
+      test: '首页',
       games: [],
-      gameid: "",
+      gameid: '',
       game: null,
       tree: null,
-      activeId: "",
-      alldata: [],
+      activeId: '',
+      alldata: {},
+      gamenodes: {},
+      searchRange: {},
       treeData: null,
       defaultProps: {
-        children: "children",
-        label: "text"
+        children: 'children',
+        label: 'text',
       },
-      currentnode: "",
+      currentnode: '',
       result: [],
       reports: [],
       editableTabs: [],
-      editableTabsValue: "home",
+      editableTabsValue: 'home',
       timeList: [],
       timer: null,
       keyword: '',
       leftindex: 1,
       favoritelist: [],
-      searchresult: []
+      searchresult: [],
     };
   },
+
   created() {
     if (!this.token) {
       if (this.$route.query.page) {
         this.$router
           .replace(
-            `/login?page=${this.$route.query.page}&title=${this.$route.query.title}`
+            `/login?page=${this.$route.query.page}&title=${this.$route.query.title}`,
           )
-          .catch(err => {
+          .catch((err) => {
             err;
           });
       } else {
-        this.$router.replace("/login").catch(err => {
+        this.$router.replace('/login').catch((err) => {
           err;
         });
       }
@@ -213,7 +259,7 @@ export default {
   components: {
   },
   computed: {
-    ...mapState(["token", "username"])
+    ...mapState(['token', 'username']),
   },
   mounted() {
     this.$nextTick(() => {
@@ -224,19 +270,19 @@ export default {
     // 监控tab切换
     editableTabsValue(newval) {
       this.handleExpandNode(newval);
-    }
+    },
   },
   methods: {
     gotoHomePage() {
-      this.$router.replace("/");
+      this.$router.replace('/');
       this.$router.go(0);
     },
     iframeLoaded(item) {
       item.loading = false;
-      var iframeWindow = document.getElementById(`iframe_${item.name}`).contentWindow;
-      var currentHref = iframeWindow.document.location.href;
+      const iframeWindow = document.getElementById(`iframe_${item.name}`).contentWindow;
+      const currentHref = iframeWindow.document.location.href;
       // 检测iframe页面变化，内部token失效跳转到login页面时，项目需要重新登录。
-      if (currentHref.includes(".ztgame.com/webroot/decision/login?")) {
+      if (currentHref.includes('.ztgame.com/webroot/decision/login?')) {
         this.reLogin();
       }
     },
@@ -244,16 +290,16 @@ export default {
      * 检测token 函数，暂时弃用
      */
     async checkToken() {
-      let rst = await service.get(
-        `/v10/homepages?fine_auth_token=${this.token}`
+      const rst = await service.get(
+        `/v10/homepages?fine_auth_token=${this.token}`,
       );
-      if (rst && rst.includes("<!DOCTYPE html>")) {
+      if (rst && rst.includes('<!DOCTYPE html>')) {
         clearInterval(this.timer);
-        this.$alert("请重新登录！", "登录会话已经失效", {
-          confirmButtonText: "确定",
-          callback: action => {
+        this.$alert('请重新登录！', '登录会话已经失效', {
+          confirmButtonText: '确定',
+          callback: () => {
             this.logout();
-          }
+          },
         });
       } else {
         // console.log('ok 没问题！');
@@ -261,115 +307,158 @@ export default {
     },
     /**
      * 添加tab页面
+     * @param pageType - 页面类型 frpage/vuepage
      */
     addTab(text, url, id) {
       if (id) {
-        const item = this.editableTabs.find(item => {
-          return item.name === id;
-        });
+        const vuePagePath = vuePagePaths[id];
+        let pageType = this.Enums.pageType.FrPage;
+
+        if (vuePagePath) {
+          pageType = this.Enums.pageType.VuePage;
+          this.$set(this.vuePages, id, true);
+        }
+
+        const item = this.editableTabs.find(tm => tm.name === id);
         const paths = [];
         if (!item) {
           this.findPath(id, paths);
           this.editableTabs.push({
             title: text,
             name: id,
-            url: url,
+            url,
             loading: true,
-            paths: paths
+            paths,
+            pageType,
           });
-        } 
+        }
         this.editableTabsValue = id;
-        this.$router.replace(`/?page=${id}&title=${text}`).catch(err => {
-          err;
-        });
+        this.toPageByPageId(id, text);
       }
     },
     handleLiClick(item) {
-      console.log(item)
-      this.addTab(item.text, this.getIFrameSrc(item.id), item.id)
+      this.addTab(item.text, this.getIFrameSrc(item.id), item.id);
     },
     handleMenuIconClick() {
       this.leftindex = 1;
       this.$nextTick(() => {
         this.handleExpandNode(this.editableTabsValue);
-      })
+      });
     },
     handleExpandNode(id) {
-      if (this.leftindex  == 1) {
-        const item = this.editableTabs.find(item => {
-          return item.name === id;
-        });
+      if (this.leftindex === 1) {
+        const item = this.editableTabs.find(tm => tm.name === id);
         if (item && item.paths && item.paths.length > 1) {
           this.expandedTreeNode(item.paths, id);
+        } else if (item.name === '53cdc453-22d8-430e-a459-f703b80701ee') {
+          // 由于首页的paths没有数据，所以这里自动查询是 写死路径
+          this.game = this.gamenodes['98eeccaf-798d-4ec8-bd0d-9ceae09cbc61'];
+          this.gameid = this.game.id;
+          const cmodule = this.game.children[0];
+          this.activeId = cmodule.id;
+          const temp = this.game.children.find(c => c.id === cmodule.id);
+          this.treeData = temp.children;
+          this.$nextTick(() => {
+            this.$refs.lefttree.setCurrentKey(item.name);
+          });
         }
       }
     },
     /** 自动展开树节点 */
     expandedTreeNode(paths, id) {
-      // console.log('expandedTreeNode:',paths, id);
       try {
         if (paths.length > 1) {
           const game = paths[0];
-          if (game.id != 'decision-directory-root') {            
-            const module = paths[1];
-            this.game = this.result.find(item => {
-              return item.id === game.id;
-            });
-            this.activeId = module.id;
-            const temp = this.game.children.find((c) => {
-              return c.id == module.id;
-            })
+          if (game.id !== 'decision-directory-root') {
+            const cmodule = paths[1];
+
+            this.game = this.gamenodes[game.id];
+            this.activeId = cmodule.id;
+            const temp = this.game.children.find(c => c.id === cmodule.id);
             this.treeData = temp.children;
             this.gameid = game.id;
             this.$nextTick(() => {
               if (paths.length > 3) {
-                this.$refs['lefttree'].store.nodesMap[paths[paths.length - 1].pId].expanded = true;
+                this.$refs.lefttree.store.nodesMap[paths[paths.length - 1].pId].expanded = true;
                 if (paths.length > 4) {
-                  this.$refs['lefttree'].store.nodesMap[paths[paths.length - 2].pId].expanded = true;
+                  this.$refs.lefttree.store.nodesMap[paths[paths.length - 2].pId].expanded = true;
                   if (paths.length > 5) {
-                    this.$refs['lefttree'].store.nodesMap[paths[paths.length - 3].pId].expanded = true;
+                    this.$refs.lefttree.store.nodesMap[paths[paths.length - 3].pId].expanded = true;
                   }
                 }
               }
-              this.$refs['lefttree'].setCurrentKey(id);
-            })
+              this.$refs.lefttree.setCurrentKey(id);
+
+              setTimeout(() => {
+                const elem = document.querySelector('.el-tree-node.is-current');
+                elem.scrollIntoViewIfNeeded();
+              }, 100);
+            });
           }
         }
       } catch (error) {
-        console.error(error)
+        console.error(error);
       }
     },
+
+    /**
+     * @description 根据pageId 路由地址切换到指定页面
+     */
+    toPageByPageId(pageId, title) {
+      const vuePagePath = vuePagePaths[pageId];
+      let url = '';
+      if (vuePagePath) {
+        url = `${vuePagePath}?page=${pageId}&title=${title}`;
+      } else {
+        url = `/?page=${pageId}&title=${title}`;
+      }
+
+      if (vuePagePath === '/paidui_feedback') {
+        url += '&gid=3';
+      }
+
+      this.$router
+        .replace(url)
+        .catch((err) => {
+          console.log(err);
+        });
+    },
+
     /**
      * tab点击事件
      */
     tabClick(e) {
       const element = e.$options.propsData;
-      const item = this.editableTabs.find(item => {
-        return item.name === element.name;
-      });
-      this.$router
-        .replace(`/?page=${element.name}&title=${element.label}`)
-        .catch(err => {
-          err;
-        });
+      console.log('tabClick', element);
+      this.toPageByPageId(element.name, element.label);
     },
+
     /** 刷新页面 */
     refreshIframe(item) {
       item.loading = true;
-      document
-        .getElementById(`iframe_${item.name}`)
-        .contentWindow.location.reload(true);
+      if (item.pageType === this.Enums.pageType.VuePage) {
+        this.testreload = false;
+        this.vuePages[item.name] = false;
+        setTimeout(() => {
+          this.vuePages[item.name] = true;
+        }, 0);
+      } else {
+        document
+          .getElementById(`iframe_${item.name}`)
+          .contentWindow.location.reload(true);
+      }
     },
     /** 关闭页面 */
     removeTab(targetName) {
-      let tabs = this.editableTabs;
+      const tabs = this.editableTabs;
       let activeName = this.editableTabsValue;
       if (activeName === targetName) {
         tabs.forEach((tab, index) => {
           if (tab.name === targetName) {
-            let nextTab = tabs[index + 1] || tabs[index - 1];
+            const nextTab = tabs[index + 1] || tabs[index - 1];
             if (nextTab) {
               activeName = nextTab.name;
+              this.toPageByPageId(activeName, nextTab.title);
             }
           }
         });
@@ -380,19 +469,15 @@ export default {
     },
     /** 选择游戏（一级目录） */
     selectGame(p, isfirst = false) {
-      this.game = this.result.find(item => {
-        return item.id === this.gameid;
-      });
-      const default_game = config.games.find(item => {
-        return item.name == this.game.text;
-      });
+      this.leftindex = 1;
+      this.game = this.gamenodes[this.gameid];
+      const defaultGame = config.games.find(item => item.name === this.game.text);
       if (this.game.children && this.game.children.length > 0) {
         this.activeId = this.game.children[0].id;
         this.treeData = this.game.children[0].children;
-        if (default_game.tabs) {
-          const dd = default_game.tabs.find(item => {
-            return item.name == this.game.children[0].text;
-          });
+        if (defaultGame && defaultGame.tabs) {
+          const dd = defaultGame.tabs.find(item => item.name === this.game.children[0].text);
+          // eslint-disable-next-line
           !isfirst && this.activeTheDefaultPage(dd.mainid);
         }
       }
@@ -401,18 +486,12 @@ export default {
      * 切换一级目录或者二级目录时，自动打开配置的页面，已经打开则切换tab到该页面
      */
     activeTheDefaultPage(mainid) {
-      const item = this.editableTabs.find(item => {
-        return item.name === mainid;
-      });
+      const item = this.editableTabs.find(tm => tm.name === mainid);
       if (item) {
         this.editableTabsValue = mainid;
-        this.$router
-          .replace(`/?page=${item.name}&title=${item.label}`)
-          .catch(err => {
-            err;
-          });
+        this.toPageByPageId(mainid, item.title);
       } else {
-        let node = this.alldata[mainid]
+        const node = this.alldata[mainid];
         this.addTab(node.text, this.getIFrameSrc(node.id), node.id);
       }
     },
@@ -422,7 +501,7 @@ export default {
         if (node.children) {
           for (let i = 0; i < node.children.length; i++) {
             const temp = node.children[i];
-            this.getAllNodes(temp, result)
+            this.getAllNodes(temp, result);
           }
         }
       } else {
@@ -434,20 +513,19 @@ export default {
       if (id) {
         return `${this.baseapi}/v10/entry/access/${id}?dashboardType=5`;
       }
-      return "";
+      return '';
     },
     /** 选择模块 */
     chooseModule(item) {
+      this.leftindex = 1;
+
       this.activeId = item.id;
       this.treeData = item.children;
 
-      const default_game = config.games.find(g => {
-        return g.name == this.game.text;
-      });
-      const dd = default_game.tabs.find(t => {
-        return t.name == item.text;
-      });
-      this.activeTheDefaultPage(dd.mainid);
+      const defaultgame = config.games.find(g => g.name === this.game.text);
+      const dd = defaultgame.tabs.find(t => t.name === item.text);
+      // eslint-disable-next-line
+      dd && this.activeTheDefaultPage(dd.mainid);
     },
     /** 选择节点 */
     handleNodeClick(data) {
@@ -456,12 +534,14 @@ export default {
       }
       this.addTab(data.text, this.getIFrameSrc(data.id), data.id);
     },
+
     /** 树节点打开事件 */
     handleNodeExpand(node) {
     },
+
     // 登出按钮
     handleCommand(command) {
-      if (command === "logout") {
+      if (command === 'logout') {
         clearInterval(this.timer);
         this.logout();
       }
@@ -478,59 +558,56 @@ export default {
       //     }
       //   })
 
-      // 跨域登出
-      const url = `/logout/cross/domain?fine_auth_token=${this.token}`;
-      jsonp(url).then(data => {
-        this.$store.commit("setToken", "");
-        this.$router.push("/login");
-        clearInterval(this.timer);
-      });
+      // // 跨域登出
+      // const url = `/logout/cross/domain?fine_auth_token=${this.token}`;
+      // jsonp(url).then(data => {
+      //   this.$store.commit("setToken", "");
+      //   this.$router.push("/login");
+      //   clearInterval(this.timer);
+      // });
+
+      this.$store.commit('setToken', '');
+      this.$router.push('/login');
+      clearInterval(this.timer);
     },
     reLogin() {
-      this.$store.commit("setToken", "");
-      if (this.$route.query && this.$route.query.page && this.$route.query.page != 'undefined') {
+      this.$store.commit('setToken', '');
+      if (this.$route.query && this.$route.query.page && this.$route.query.page !== 'undefined') {
         this.$router
           .replace(
-            `/login?page=${this.$route.query.page}&title=${this.$route.query.title}`
+            `/login?page=${this.$route.query.page}&title=${this.$route.query.title}`,
           )
-          .catch(err => {
+          .catch((err) => {
             err;
           });
       } else {
-        this.$router.replace("/login").catch(err => {
+        this.$router.replace('/login').catch((err) => {
           err;
         });
       }
     },
-    /** 配置一级菜单图标 */
-    getGameIcon(name) {
-      const list = {
-        球球大作战: "qiuqiu.png",
-        嘿嘿语音: "heyhey.png"
-      };
-      return list[name] ? list[name] : "default.png";
-    },
+
     /** 缓存下全部节点 key-value */
     parseAllData(data) {
-      try {
-        let temp = JSON.parse(JSON.stringify(data));
-        const ret = {};
-        for (let index = 0; index < temp.length; index++) {
-          const element = temp[index];
-          ret[element.id] = element;
-        }
-        this.alldata = ret;
-      } catch (error) {
-        console.log(error)
-      }
+      // try {
+      //   let temp = JSON.parse(JSON.stringify(data));
+      //   const ret = {};
+      //   for (let index = 0; index < temp.length; index++) {
+      //     const element = temp[index];
+      //     ret[element.id] = element;
+      //   }
+      //   this.alldata = ret;
+      // } catch (error) {
+      //   console.log(error)
+      // }
     },
     /** 寻找某个页面全路径 */
+    // eslint-disable-next-line
     findPath(id, list) {
       const cur = this.alldata[id];
       if (cur) {
         list.unshift(cur);
-        if (cur.pId && cur.text != '球球大作战' && cur.text != '嘿嘿语音') {
-          // console.log('继续查找');
+        if (cur.pId && !this.menu.includes(cur.text)) {
           this.findPath(cur.pId, list);
         } else {
           return false;
@@ -538,7 +615,7 @@ export default {
       }
     },
     getAllPath(id) {
-      const list = []
+      const list = [];
       this.findPath(id, list);
       const temp = [];
       for (let i = 0; i < list.length; i++) {
@@ -553,47 +630,34 @@ export default {
       // service.get(`/v10/decision-directory-root/entries?fine_auth_token=${this.token}`)
       service
         .get(`/v10/entries/all?fine_auth_token=${this.token}`)
-        .then(data => {
-          if (data && data.includes("<!DOCTYPE html>")) {
+        .then((data) => {
+          if (data && data.includes('<!DOCTYPE html>')) {
             this.reLogin();
           }
           if (data) {
-            // this.parseAllData(data);
-            const result = jsonToTree(data, "id", "pId");
-            const temp = result.find(item => {
-              return item.id === "decision-directory-root";
-            });
-            this.result = temp.children;
+            const gamenodes = {};
             const allnodes = {};
-            for (let index = 0; index < this.result.length; index++) {
-              const element = this.result[index];
-              // this.games.push({ text: element.text, id: element.id });
-              // 目前只显示 球球大作战 目录
-              if (element.text === "球球大作战") {
-                this.games.push({ text: element.text, id: element.id });
-                this.gameid = element.id;
-                this.selectGame(element.id, true);
-                this.getAllNodes(element, allnodes);
-              }
-              if (element.text === "嘿嘿语音") {
-                this.games.push({ text: element.text, id: element.id });
-                this.getAllNodes(element, allnodes);
-              }
-            }
-            let cc = 0
-            for (const key in allnodes) {
-              if (allnodes.hasOwnProperty(key)) {
-                const element =  allnodes[key];
-                cc++;
-              }
-            }
-            console.log('alldata:', cc)
+
+            const result = jsonToTree2(data, 'id', 'pId', this.menu, gamenodes, false);
+            this.gamenodes = gamenodes;
+            let firstid = '';
+            // for (const key in gamenodes) {
+            Object.keys(gamenodes).forEach((key) => {
+              !firstid && (firstid = key);
+              const element = gamenodes[key];
+              this.games.push({ text: element.text, id: element.id });
+              this.getAllNodes(element, allnodes);
+            });
             this.alldata = allnodes;
+            this.gameid = firstid;
+            this.selectGame(firstid, true);
+
+            this.result = result;
             this.getHomePage();
             this.getFavoriteList();
           }
         })
-        .catch(error => {
+        .catch((error) => {
           console.error(error);
         });
     },
@@ -601,10 +665,10 @@ export default {
       const id = '98eeccaf-798d-4ec8-bd0d-9ceae09cbc61';
       service
         .get(`/v10/${id}/entries?fine_auth_token=${this.token}`)
-        .then(data => {
+        .then((data) => {
           console.log(data);
         })
-        .catch(error => {
+        .catch((error) => {
           console.error(error);
         });
     },
@@ -612,10 +676,10 @@ export default {
     getFavoriteList() {
       service
         .get(`/v10/favorite/entry/list?fine_auth_token=${this.token}`)
-        .then(data => {
+        .then((data) => {
           this.favoritelist = data;
         })
-        .catch(error => {
+        .catch((error) => {
           console.error(error);
         });
     },
@@ -625,11 +689,11 @@ export default {
       // /v10/homepages 获取全部首页
       service
         .get(`/v10/homepages?fine_auth_token=${this.token}`)
-        .then(data => {
+        .then((data) => {
           if (data) {
             if (data && data.length > 0) {
               const item = data[0];
-              let src = this.getIFrameSrc(item.pcHomePage);
+              const src = this.getIFrameSrc(item.pcHomePage);
               item.id = item.pcHomePage;
               item.text = item.pcHomePageText;
               this.alldata[item.id] = item;
@@ -639,18 +703,14 @@ export default {
               } else {
                 this.addTab(item.pcHomePageText, src, item.pcHomePage);
               }
-            } else {
-              if (this.$route.query && this.$route.query.page) {
-                this.addQueryPage(this.$route.query.page, this.$route.query.title);
-              }
-            }
-          } else {
-            if (this.$route.query && this.$route.query.page) {
+            } else if (this.$route.query && this.$route.query.page) {
               this.addQueryPage(this.$route.query.page, this.$route.query.title);
             }
+          } else if (this.$route.query && this.$route.query.page) {
+            this.addQueryPage(this.$route.query.page, this.$route.query.title);
           }
         })
-        .catch(error => {
+        .catch((error) => {
           console.error(error);
         });
     },
@@ -659,12 +719,11 @@ export default {
       // /v10/favorite/entry/{entryId}
       service
         .post(`/v10/favorite/entry/${item.name}?fine_auth_token=${this.token}`)
-        .then(data => {
-          console.log(data);
-          this.$message.success("收藏成功！")
+        .then((data) => {
+          this.$message.success('收藏成功！');
           this.getFavoriteList();
         })
-        .catch(error => {
+        .catch((error) => {
           console.error(error);
         });
     },
@@ -673,39 +732,64 @@ export default {
       // /v10/favorite/entry/{entryId}
       service
         .delete(`/v10/favorite/entry/${id}?fine_auth_token=${this.token}`)
-        .then(data => {
-          console.log(data);
-          this.$message.success("取消成功！")
+        .then(() => {
+          this.$message.success('取消成功！');
           this.getFavoriteList();
         })
-        .catch(error => {
+        .catch((error) => {
           console.error(error);
         });
     },
-    /** 目录搜索结果 */
-    searchMenuList() {
-      this.leftindex = 3;
-      if (this.keyword) {
+    querySearch(querystring, cb) {
+      const searchRange = {};
+      this.getAllNodes(this.gamenodes[this.gameid], searchRange);
+      this.searchRange = searchRange;
+
+      // this.leftindex = 3;
+      if (querystring) {
         service
-          .get(` /v10/entry/list?keyword=${this.keyword}&fine_auth_token=${this.token}`)
-          .then(data => {
-            this.searchresult = data;
+          .get(`/v10/entry/list?keyword=${querystring}&fine_auth_token=${this.token}`)
+          .then((data) => {
+            // this.searchresult = data;
+            const tem = data.filter(f => f.isParent === false && searchRange[f.id]);
+            cb(tem);
           })
-          .catch(error => {
+          .catch((error) => {
             console.error(error);
           });
       }
     },
-     /** 获取通知信息 */
+    handleSelect() {
+      this.leftindex = 1;
+    },
+    /** 目录搜索结果 */
+    searchMenuList() {
+      const searchRange = {};
+      this.getAllNodes(this.gamenodes[this.gameid], searchRange);
+      this.searchRange = searchRange;
+
+      this.leftindex = 3;
+      if (this.keyword) {
+        service
+          .get(`/v10/entry/list?keyword=${this.keyword}&fine_auth_token=${this.token}`)
+          .then((data) => {
+            this.searchresult = data;
+          })
+          .catch((error) => {
+            console.error(error);
+          });
+      }
+    },
+    /** 获取通知信息 */
     getNotice() {
       axios
-        .get(process.env.AssetsPublicPath + "static/config/notice.json")
-        .then(res => {
-          var result = res.data;
+        .get(`${process.env.AssetsPublicPath}static/config/notice.json?t=${new Date().getTime()}`)
+        .then((res) => {
+          const result = res.data;
           if (result.notices && result.notices.length > 0) {
             for (let index = 0; index < result.notices.length; index++) {
               const element = result.notices[index];
-              if (element.endtime && new Date() > new Date(element.endtime)) {
+              if ((element.endtime && new Date() > new Date(element.endtime)) || (element.starttime && new Date() < new Date(element.starttime))) {
                 continue;
               }
               setTimeout(() => {
@@ -714,7 +798,7 @@ export default {
                   message: element.content,
                   type: element.type,
                   duration: element.duration,
-                  offset: 40
+                  offset: 40,
                 });
               }, (index + 3) * 1500);
             }
@@ -722,40 +806,55 @@ export default {
         });
     },
     addQueryPage(id, title) {
-      this.addTab(title || "NEWPAGE", this.getIFrameSrc(id), id);
+      this.addTab(title || 'NEWPAGE', this.getIFrameSrc(id), id);
       this.$nextTick(() => {
         this.handleExpandNode(id);
-      })
-    }
-  }
+      });
+    },
+  },
 };
 </script>
 
 <style lang="less">
+
 .tab-refresh {
   padding: 4px 10px !important;
   text-align: center !important;
   cursor: pointer;
   min-width: 80px !important;
-  
+
   .refrash-btn {
     cursor: pointer;
     line-height: 36px;
-    padding: 0 10px;
+    padding: 0 12px;
     &:hover {
-      color: lighten(#5d89fe, 5%);
+      color: lighten(#47a8ea, 5%);
     }
-    &:first-child {
-      border-bottom: 1px solid #ededed;
-    }
+    // &:first-child {
+    //   border-bottom: 1px solid #ededed;
+    // }
   }
 }
 </style>
 
 <style lang='less' scoped>
 @mainfont: #5d6284;
-@mainColor: #5d89fe;
+// @mainColor: #5d89fe;
+@mainColor: #47a8ea;
 @bgwhite: #f7f8ff;
+
+.vuePageContainer{
+  background-color: #fff;
+  height: 100%;
+  overflow-y: auto;
+  padding: 20px;
+}
+.ercode-div {
+  img {
+    width: 176px;
+    height: 176px;
+  }
+}
 
 .main-container {
   display: block;
@@ -765,11 +864,12 @@ export default {
     .el-header {
       color: #333;
       text-align: center;
-      line-height: 50px;
-      height: 50px;
+      line-height: 40px;
+      height: 40px;
       width: 100%;
-      background-color: #ffffff;
-      padding: 5px 20px 5px 10px;
+      background-color: @mainColor;
+      padding: 0px 10px 0px 10px;
+      display: flex;
       &::after {
         float: clear;
       }
@@ -784,52 +884,70 @@ export default {
         text-align: left;
         height: 40px;
         line-height: 40px;
-        border-radius: 4px;
         .text {
           display: inline-block;
           vertical-align: middle;
+          color: #FFFFFF;
         }
         .logo {
           width: 20px;
           height: 20px;
           display: inline-block;
           vertical-align: middle;
-          background-image: url("../../../static/logo_g.png");
+          background-image: url("../../../static/imgs/logo_w.png");
           background-size: 100% 100%;
         }
         &:hover {
           background: rgb(235, 239, 245);
+          .text {
+            color: @mainfont;
+          }
+          .logo {
+            background-image: url("../../../static/imgs/logo_g.png");
+          }
         }
       }
       .modules {
         float: left;
+        flex: 1;
         height: 40px;
-        width: calc(100% - 460px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        // padding: 3px 0;
+        // width: calc(100% - 530px);
         /deep/.el-scrollbar .el-scrollbar__wrap {
           height: calc(100% + 17px);
           .el-scrollbar__view {
             white-space: nowrap;
             text-align: center;
-            height: 40px;
-            line-height: 40px;
+            height: 34px;
+            line-height: 34px;
           }
         }
         .module {
           display: inline-block;
           position: relative;
-          height: 40px;
+          height: 34px;
           border: none;
-          line-height: 40px;
-          padding: 0 20px;
-          border-radius: 0;
+          line-height: 34px;
+          padding: 0px 18px;
+          margin: 0 2px;
+          border-radius: 4px;
           margin-left: 0px;
-          color: fade(@mainfont, 65%);
+          color: #ffffff;
+          font-size: 16px;
+          font-weight: bold;
           cursor: pointer;
-          transition: all 0.3s;
+          transition: all 0.2s;
+          &:hover:not(.active) {
+            background: #F3F3F3;
+            color: lighten(@mainColor, 5%);
+          }
           &.active {
             color: @mainColor;
             font-size: 16px;
-            font-weight: bold;
+            background: #ffffff;
           }
           &.waiting::before {
             content: "敬请期待";
@@ -866,13 +984,17 @@ export default {
       }
       .right {
         float: left;
-        width: 300px;
+        max-width: 390px;
+        display: flex;
         position: relative;
         /deep/.el-select {
           float: left;
           width: 140px;
           line-height: 30px;
+          height: 30px;
           margin-top: 5px;
+          background-color: #FFFFFF;
+          border-radius: 4px;
           .el-input {
             border: 1px solid fade(@mainfont, 15%);
             border-radius: 4px;
@@ -902,13 +1024,13 @@ export default {
           }
         }
         /deep/.el-dropdown {
-          float: left;
-          width: 150px;
+          float: right;
           margin-left: 10px;
           height: 40px;
           line-height: 40px;
           .el-dropdown-link {
-            color: @mainfont;
+            color: #FFFFFF;
+            cursor: default;
           }
         }
         .gameicon {
@@ -924,7 +1046,7 @@ export default {
       }
     }
     .down-container {
-      height: calc(100% - 50px);
+      height: calc(100% - 40px);
     }
     .el-aside {
       background-color: @bgwhite;
@@ -945,15 +1067,16 @@ export default {
           padding: 2px;
           width: 28px;
           height: 28px;
-          color: #B2D4E6;
+          // color: #B2D4E6;
+          color: lighten(@mainColor, 20%);
           font-size: 24px;
           cursor: pointer;
           transition: all 0.3s;
           &:hover {
-            color: #82A4C6;
+            color: lighten(@mainColor, 10%);
           }
           &.active {
-            color: #7294b6;
+            color: @mainColor;
           }
         }
         /deep/.search-input {
@@ -964,7 +1087,7 @@ export default {
       }
       .left_panel {
         height: calc(100% - 38px);
-        
+
         p.title {
           color: #c3c3c3;
           text-align: left;
@@ -1068,7 +1191,7 @@ export default {
             font-size: 12px;
             background: #fff;
             border-bottom: 1px solid #e4e7ed;
-            padding: 0 5px;
+            padding: 0px;
             width: 150px;
             transition: all 0.2s;
             &:hover {
@@ -1078,6 +1201,9 @@ export default {
               text-align: center;
               margin-left: 0px;
               line-height: 14px;
+              position: absolute;
+              right: 4px;
+              top: 8px;
               &::before {
                 transform: scale(1);
               }
@@ -1088,21 +1214,34 @@ export default {
               overflow: hidden;
               text-overflow: ellipsis;
               line-height: 28px;
+              font-size: 12px;
               border: none;
               padding: 0;
+              outline: none;
               &:hover,
               &:focus,
               &:active {
+                color: @mainColor;
                 background: none;
               }
-              
             }
           }
           .el-tabs__item.is-active {
-            border-bottom: 1px solid @mainColor;
-            color: @mainColor;
+            color: #FFF;
             font-weight: bold;
-            background-color: #fff;
+            background-color: @mainColor;
+            .el-icon-refresh {
+              color: #FFF;
+              &:hover,
+              &:focus,
+              &:active {
+                background-color: lighten(@mainColor, 10%);
+              }
+            }
+            .el-button {
+              color: #FFF;
+              background-color: @mainColor;
+            }
           }
           .el-tabs__nav-wrap {
             .el-tabs__nav-next, .el-tabs__nav-prev {
@@ -1114,12 +1253,13 @@ export default {
             }
           }
         }
-        .el-tabs__content {
+        > .el-tabs__content {
           height: calc(100% - 30px) !important;
           min-height: 400px;
-          .el-tab-pane {
+          > .el-tab-pane {
             min-height: 400px;
             height: 100%;
+            background-color: #fff;
           }
         }
       }
@@ -1157,6 +1297,21 @@ export default {
     &:hover {
       background-color: lighten(@mainColor, 50%);
       color: @mainColor;
+    }
+  }
+}
+.tabtitle {
+  outline: none;
+  position: relative;
+  padding: 0 10px;
+  .refrash-i {
+    position: absolute;
+    left: 0px;
+    color: #666;
+    padding: 8px 5px;
+    &:hover {
+      color: @mainColor;
+      background: #f6f6f6;
     }
   }
 }
