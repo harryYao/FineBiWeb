@@ -10,27 +10,29 @@
 
 ## 框架
 
-> 本项目框架基于 vue init webpack demo  
+> 本项目框架基于 vue init webpack FineBiWeb  
 
 ## 构建过程
 
 ``` bash
+# 安装FineBI服务
+# https://help.fanruan.com/finebi/doc-view-260.html
+
+# 下载本项目，安装依赖
 # install dependencies
 npm install
 
 # serve with hot reload at localhost:8080
 npm run dev
 
-# build for production with minification
-npm run build
-
-# 将 /dist 文件内的全部文件 copy 到 ../FineBI5.1/webapps/webroot
-
 ```
 
 ## 配置目录
 
-> src/utils/setting
+> 修改配置文件 src/utils/setting  
+> 根据帆软应用的目录结构，找到目录的对应id进行配置。  
+> 不知道如何找id？ 可以先配置menu，然后启动 npm run dev, 自己点开也买你，路由中就有id
+> 
 ```
 
 export default {
@@ -87,5 +89,17 @@ export default {
     }
   ]
 };
+
+```
+
+
+## 部署
+
+```
+# build for production with minification
+npm run build
+
+# 将 /dist 文件内的全部文件 copy 到 ../FineBI5.1/webapps/webroot
+# 打开 http://localhost:37799/webroot/#  即可看到部署后页面
 
 ```
