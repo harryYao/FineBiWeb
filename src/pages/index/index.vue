@@ -4,7 +4,7 @@
       <el-header height="40px">
         <div class="logo-name" @click="gotoHomePage">
           <span class="logo"></span>
-          <span class="text">商业智能报表</span>
+          <span class="text">xx公司BI系统</span>
         </div>
         <div class="modules">
           <template v-if="game">
@@ -22,20 +22,18 @@
         <div class="right">
           <el-select v-model="gameid" placeholder="请选择" @change="selectGame">
             <el-option v-for="item in games" :key="item.id" :label="item.text" :value="item.id">
-              <!-- <span class="icon" :style="{backgroundImage: `url('/webroot/static/gamesicon/${getGameIcon(item.text)}')`}"></span> -->
-              <span class="icon" :style="{backgroundImage: `url('http://bob.ztgame.com/webroot/static/gamesicon/${iconlist[item.text]}')`}"></span>
+              <span class="icon" :style="{backgroundImage: `url('./static/imgs/${getIcon(item.text)}')`}"></span>
               <span class="text">{{ item.text }}</span>
             </el-option>
           </el-select>
-          <!-- <span class="gameicon" v-if="game" :style="{backgroundImage: `url('/webroot/static/gamesicon/${getGameIcon(game.text)}')`}"></span> -->
-          <span class="gameicon" v-if="game" :style="{backgroundImage: `url('http://bob.ztgame.com/webroot/static/gamesicon/${iconlist[game.text]}')`}"></span>
-          <el-popover
+          <span class="gameicon" v-if="game" :style="{backgroundImage: `url('./static/imgs/${getIcon(game.text)}')`}"></span>
+          <!-- <el-popover
             placement="top-start"
             width="200"
             trigger="hover">
             <div class="ercode-div">
               <div class="title" style="padding: 4px 0 6px 0;">
-                <p style="font-size: 16px;"><b>智能报表</b></p>
+                <p style="font-size: 16px;"><b>智能报表APP</b></p>
                 <p>V1.0.4（2020-12-16）</p>
               </div>
               <img src="../../../static/imgs/app_download.png" alt="">
@@ -43,7 +41,7 @@
             <div slot="reference" style="cursor:default; font-weight: bold; width: 60px;float: left;margin-left: 8px; color: #fff;">
               <i class="el-icon-mobile" style="font-size: 20px;position: relative; bottom: -3px;"/>APP
             </div>
-          </el-popover>
+          </el-popover> -->
           <el-dropdown @command="handleCommand">
             <span class="el-dropdown-link">
               {{ username }}
@@ -187,7 +185,7 @@ import Settings from '@/utils/settings';
 import { jsonToTree2 } from '@/utils/utils';
 import service from '@/service/index';
 
-const { vuePagePaths, games } = Settings;
+const { vuePagePaths, menu, games } = Settings;
 
 export default {
   name: '',
@@ -196,17 +194,10 @@ export default {
       // 用于控制reloading
       // eg 319ff229-5f85-4ad2-9b37-c502595c29cf: true, 当设为flase之后再设为true实现指定router-view 重新加载
       // add tab之后设置初始值
-      vuePages: {
-
-      },
-      menu: ['财务部门', '销售部门', '客服'],
-      iconlist: {
-        财务部门: 'caiwu.png',
-        销售部门: 'xiaoshou.png',
-        客服: 'kefu.png'
-      },
+      vuePages: {},
+      // 配置需要展示的一级目录
+      menunames: menu.map(item => item.name),
       baseapi: process.env.BASE_API,
-      test: '首页',
       games: [],
       gameid: '',
       game: null,
@@ -269,6 +260,9 @@ export default {
     },
   },
   methods: {
+    getIcon(name) {
+      return menu.find(item => item.name === name).icon;
+    },
     gotoHomePage() {
       this.$router.replace('/');
       this.$router.go(0);
@@ -603,7 +597,7 @@ export default {
       const cur = this.alldata[id];
       if (cur) {
         list.unshift(cur);
-        if (cur.pId && !this.menu.includes(cur.text)) {
+        if (cur.pId && !this.menunames.includes(cur.text)) {
           this.findPath(cur.pId, list);
         } else {
           return false;
@@ -634,7 +628,7 @@ export default {
             const gamenodes = {};
             const allnodes = {};
 
-            const result = jsonToTree2(data, 'id', 'pId', this.menu, gamenodes, false);
+            const result = jsonToTree2(data, 'id', 'pId', this.menunames, gamenodes, false);
             this.gamenodes = gamenodes;
             let firstid = '';
             // for (const key in gamenodes) {

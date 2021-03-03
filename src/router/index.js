@@ -17,7 +17,7 @@ const router = new Router({
       component: IndexPage,
       children: [
         {
-          path: '/skin',
+          path: '/testpage',
           component: TestPage,
         },
       ],

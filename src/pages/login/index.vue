@@ -5,7 +5,7 @@
         <div class="left-inner">
           <div class="title">
             <span class="logo"></span>
-            <span class="text">商业智能报表</span>
+            <span class="text">xx公司BI系统</span>
           </div>
         </div>
       </div>
@@ -111,7 +111,6 @@ export default {
 </script>
 
 <style lang='less' scoped>
-// @mainColor: #5d89fe;
 @mainColor: #47a8ea;
 
 .login-container {
