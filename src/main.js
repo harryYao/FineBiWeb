@@ -1,13 +1,13 @@
 // The Vue build version to load with the `import` command
 // (runtime-only or standalone) has been set in webpack.base.conf with an alias.
 import Vue from 'vue';
-import Enums from '@/config/enums';
+import Enums from './utils/enums';
 import App from './App';
 import router from './router';
 import store from './store';
 import ElementUIInstall from './utils/el';
 
-import './theme/index.css';
+import './assets/theme/index.css';
 import './assets/base.less';
 import './assets/icons/iconfont.css';
 

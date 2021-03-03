@@ -33,6 +33,8 @@ module.exports = {
     // disallow reassignment of function parameters
     // disallow parameter object manipulation except for specific exclusions
     'no-param-reassign': 'off',
+    
+    'comma-dangle': '0',
     'max-len': ['error', { code: 300 }],
     'no-console': 'off',
     "no-plusplus": 0,

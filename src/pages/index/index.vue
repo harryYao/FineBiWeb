@@ -183,13 +183,11 @@
 <script>
 import axios from 'axios';
 import { mapState } from 'vuex';
-import Settings from '@/config/settings';
-// import jsonp from "../../service/jsonp";
-import service from '../../service/index';
-import { jsonToTree2 } from '../../utils/utils';
-import config from '../../utils/config';
+import Settings from '@/utils/settings';
+import { jsonToTree2 } from '@/utils/utils';
+import service from '@/service/index';
 
-const { vuePagePaths } = Settings;
+const { vuePagePaths, games } = Settings;
 
 export default {
   name: '',
@@ -201,13 +199,11 @@ export default {
       vuePages: {
 
       },
-      menu: ['球球大作战', '嘿嘿语音', '球球测试服', '球球派对', '球球海外版'],
+      menu: ['财务部门', '销售部门', '客服'],
       iconlist: {
-        球球大作战: 'qiuqiu.png',
-        嘿嘿语音: 'heyhey.png',
-        球球测试服: 'qiuqiu.png',
-        球球派对: 'qiuqiupaidui.png',
-        球球海外版: 'qiuqiu.png',
+        财务部门: 'caiwu.png',
+        销售部门: 'xiaoshou.png',
+        客服: 'kefu.png'
       },
       baseapi: process.env.BASE_API,
       test: '首页',
@@ -471,7 +467,7 @@ export default {
     selectGame(p, isfirst = false) {
       this.leftindex = 1;
       this.game = this.gamenodes[this.gameid];
-      const defaultGame = config.games.find(item => item.name === this.game.text);
+      const defaultGame = games.find(item => item.name === this.game.text);
       if (this.game.children && this.game.children.length > 0) {
         this.activeId = this.game.children[0].id;
         this.treeData = this.game.children[0].children;
@@ -522,7 +518,7 @@ export default {
       this.activeId = item.id;
       this.treeData = item.children;
 
-      const defaultgame = config.games.find(g => g.name === this.game.text);
+      const defaultgame = games.find(g => g.name === this.game.text);
       const dd = defaultgame.tabs.find(t => t.name === item.text);
       // eslint-disable-next-line
       dd && this.activeTheDefaultPage(dd.mainid);
@@ -1275,7 +1271,6 @@ export default {
         color: @mainColor;
       }
       .icon {
-        // background-image: url('../../../static/gamesicon/qiuqiu.png');
         background-size: 100% 100%;
         border-radius: 4px;
         width: 18px;

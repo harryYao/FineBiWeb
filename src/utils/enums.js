@@ -1,8 +1,8 @@
-import Enum from '@/utils/enum';
+import Enum from './enum';
 
 export const pageTypeEnum = new Enum(
   { alias: 'FrPage', text: 'FR报表页', value: '1' },
-  { alias: 'VuePage', text: '自研报表页', value: '2' },
+  { alias: 'VuePage', text: '自研web页', value: '2' },
 );
 
 export default {
