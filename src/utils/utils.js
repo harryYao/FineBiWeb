@@ -1,3 +1,9 @@
+/**
+ * 将全量的json目录和节点数据，解析为树状结构数据。
+ * @param { 源数据 } jsonData
+ * @param {*} id
+ * @param {*} pid
+ */
 export function jsonToTree(jsonData, id, pid) {
   const result = [];
   const temp = {};
@@ -74,8 +80,3 @@ export function CleanObj(source) {
   return obj;
 }
 
-export function DeepClone(obj) {
-  const obj2 = JSON.stringify(obj);
-  const objClone = JSON.parse(obj2);
-  return objClone;
-}
