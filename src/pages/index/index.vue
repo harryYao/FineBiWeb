@@ -773,21 +773,22 @@ export default {
     /** 获取通知信息 */
     getNotice() {
       axios
-        .get(`${process.env.AssetsPublicPath}static/config/notice.json?t=${new Date().getTime()}`)
+        .get(`${process.env.AssetsPublicPath}static/notice/notice.json?t=${new Date().getTime()}`)
         .then((res) => {
           const result = res.data;
           if (result.notices && result.notices.length > 0) {
             for (let index = 0; index < result.notices.length; index++) {
-              const element = result.notices[index];
-              if ((element.endtime && new Date() > new Date(element.endtime)) || (element.starttime && new Date() < new Date(element.starttime))) {
+              const temp = result.notices[index];
+              if ((temp.endtime && new Date() > new Date(temp.endtime)) || (temp.starttime && new Date() < new Date(temp.starttime))) {
                 continue;
               }
+                console.log('=>getNoticegetNoticegetNoticegetNotice');
               setTimeout(() => {
                 this.$notify({
-                  title: element.title,
-                  message: element.content,
-                  type: element.type,
-                  duration: element.duration,
+                  title: temp.title,
+                  message: temp.content,
+                  type: temp.type,
+                  duration: temp.duration,
                   offset: 40,
                 });
               }, (index + 3) * 1500);

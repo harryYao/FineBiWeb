@@ -1,0 +1,12 @@
+{
+  "notices": [
+    {
+      "title": "通知",
+      "content": "报表服务正在恢复中，请稍后。",
+      "type": "warning",
+      "duration": 10000,
+      "starttime": "2021-03-03 12:30:00",
+      "endtime": "2021-03-03 22:30:00"
+    }
+  ]
+}
