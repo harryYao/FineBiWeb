@@ -2,10 +2,11 @@
 
 > 这是一个基于帆软FineBI报表平台改造的一个壳应用   
 > https://help.fanruan.com/finebi/   
-> 用于改善 目录结构较多较深的报表平台  
-> 使用体验有较多的提升  
-> 同时可以加入自己开发的web页面  
-> 使得该报表应用的使用性大大扩展
+> 用于改善 目录结构较多较深的报表平台,使用体验有较多的提升  
+> 主要功能：
+* 提取一级目录为下拉框选项，二级目录展示在正上方为模块选项，三级目录则为左侧树状目录
+* 同时可以加入自己开发的web页面  
+* 可以直接复制url地址给他人,可以直接打开
 
 
 ## 框架
@@ -99,7 +100,8 @@ export default {
 # build for production with minification
 npm run build
 
-# 将 /dist 文件内的全部文件 copy 到 ../FineBI5.1/webapps/webroot
-# 打开 http://localhost:37799/webroot/#  即可看到部署后页面
+# 将 /dist 文件内的全部文件 copy 到 ../FineBI5.1/webapps/webroot  
+# 启动帆软BI服务，http://localhost:37799/webroot/descition 是原本的管理页面。  
+# 打开 http://localhost:37799/webroot/#  即可看到我们开发的页面  
 
 ```
