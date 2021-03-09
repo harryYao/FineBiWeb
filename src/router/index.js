@@ -28,8 +28,8 @@ const router = new Router({
       component: LoginPage,
     },
     {
-      path: '/feedbackmobile',
-      name: 'FeedBackMobile',
+      path: '/mobiletest',
+      name: 'mobiletest',
       component: MobileTestPage,
     },
   ],
