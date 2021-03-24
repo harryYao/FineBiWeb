@@ -12,7 +12,7 @@ module.exports = {
     assetsPublicPath: '/',
     proxyTable: {
       "/webroot/decision": {
-        target: "http://localhost:37799/",
+        target: "http://localhost:37799",
         changeOrigin: true
       }      
     },

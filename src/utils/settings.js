@@ -17,12 +17,12 @@ export default {
       name: '财务部门',
       tabs: [
         {
-          name: '概览',
-          mainid: '37264d12-7597-4ee7-9068-3dd6633b108f',
+          name: '行业应用',
+          mainid: '3962ba93-cac7-4a12-ab10-197dc5a1f16a',
         },
         {
-          name: '支出',
-          mainid: '00efb90d-0e0b-4d94-ae87-36593d6e231d',
+          name: '管理驾驶舱',
+          mainid: 'c94b5c30-6b51-4639-a8fa-094d4a013e5a',
         },
         {
           name: '自定义页面',

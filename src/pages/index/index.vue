@@ -152,6 +152,7 @@
                   frameborder="0"
                   style="min-height: 400px;"
                   @load="iframeLoaded(item)"
+                  @readyStateChange="onreadystatechange(item)"
                 ></iframe>
                 <div class="vuePageContainer" v-else>
                   <keep-alive v-if="vuePages[item.name]">
@@ -275,6 +276,9 @@ export default {
       if (currentHref.includes('.ztgame.com/webroot/decision/login?')) {
         this.reLogin();
       }
+    },
+    onreadystatechange(item) {
+      console.log('onreadystatechange', item.name);
     },
     /**
      * 检测token 函数，暂时弃用
