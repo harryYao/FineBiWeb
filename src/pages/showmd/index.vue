@@ -10,7 +10,13 @@
     <div v-html="html" ></div>
   </div>
 </template>
+
+
 <script>
+// 当前markdown的插件是  https://github.com/showdownjs/showdown     11.6k
+// 另一个markdown插件是  https://github.com/markedjs/marked         24.7k
+// TODO 可以换个试试
+
 import showdown from 'showdown'
 import readme from '../../../README.md'
 export default {
