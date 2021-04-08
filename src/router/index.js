@@ -3,8 +3,9 @@ import Router from 'vue-router';
 import IndexPage from '@/pages/index/index';
 import LoginPage from '@/pages/login/index';
 
-const TestPage = () => import(/* webpackChunkName: 'skintest' */'@/pages/testpage/index');
-const MobileTestPage = () => import(/* webpackChunkName: 'skintest' */'@/pages/testpage/mobile');
+const TestPage = () => import(/* webpackChunkName: 'testPage' */'@/pages/testpage/index');
+const MobileTestPage = () => import(/* webpackChunkName: 'mobileTestPage' */'@/pages/testpage/mobile');
+const ShowmdPage = () => import(/* webpackChunkName: 'showmd' */'@/pages/showmd/index');
 
 Vue.use(Router);
 
@@ -20,12 +21,21 @@ const router = new Router({
           path: '/testpage',
           component: TestPage,
         },
+        {
+          path: '/showmd',
+          component: ShowmdPage
+        }
       ],
     },
     {
       path: '/login',
       name: 'LoginPage',
       component: LoginPage,
+    },
+    {
+      path: '/showmd',
+      name: 'ShowmdPage',
+      component: ShowmdPage,
     },
     {
       path: '/mobiletest',

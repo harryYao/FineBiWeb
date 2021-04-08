@@ -32,6 +32,13 @@ module.exports = {
   },
   module: {
     rules: [
+      { 
+        test: /\.md$/, 
+        use: [ 
+          { loader: 'html-loader' }, 
+          { loader: 'markdown-loader', options: {} } 
+        ] 
+      },
       {
         test: /\.vue$/,
         loader: 'vue-loader',

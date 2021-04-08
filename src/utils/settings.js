@@ -2,7 +2,8 @@
 export default {
   // 通过配置BI目录，设置一个仪表板，只有一个web组件，嵌入一个页面（）
   vuePagePaths: {
-    '00a9e37f-ca1f-49cc-bb0b-f30f27f7ad1f': '/testpage'
+    '00a9e37f-ca1f-49cc-bb0b-f30f27f7ad1f': '/testpage',
+    '82086aad-8ffd-4133-82d0-2a7263692342': '/showmd'
   },
   menu: [
     { name: '财务部门', icon: 'caiwu.png' },
@@ -26,7 +27,7 @@ export default {
         },
         {
           name: '自定义页面',
-          mainid: '00a9e37f-ca1f-49cc-bb0b-f30f27f7ad1f',
+          mainid: '82086aad-8ffd-4133-82d0-2a7263692342',
         },
       ],
     },

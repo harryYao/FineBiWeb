@@ -1168,7 +1168,7 @@ export default {
     .el-main {
       background-color: #e9eef3;
       color: #333;
-      text-align: center;
+      // text-align: center;
       height: 100%;
       padding: 0;
       overflow: hidden;
