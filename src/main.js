@@ -6,7 +6,9 @@ import router from './router';
 import store from './store';
 import Enums from './utils/enums';
 import ElementUI from './utils/el';
+import hljs from "highlight.js"
 
+import 'highlight.js/styles/default.css';
 import './assets/theme/index.css';
 import './assets/base.less';
 import './assets/icons/iconfont.css';
@@ -31,6 +33,13 @@ Vue.prototype.canScroll = () => {
   document.removeEventListener('touchmove', mo, false);
 };
 
+// 定义自定义指令 highlight 代码高亮
+Vue.directive('highlight',function (el) {
+  let blocks = el.querySelectorAll('pre code');
+  blocks.forEach((block)=>{
+    hljs.highlightBlock(block)
+  })
+})
 
 // 引入 Element
 // Vue.use(ElementUI);
