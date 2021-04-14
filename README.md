@@ -33,9 +33,9 @@ npm run dev
 > 修改配置文件 src/utils/setting  
 > 根据帆软应用的目录结构，找到目录的对应id进行配置。  
 > 不知道如何找id？ 可以先配置menu，然后启动 npm run dev, 自己点开也买你，路由中就有id
-> 
-```
 
+
+```js
 export default {
   // 通过配置BI目录，设置一个仪表板，只有一个web组件，嵌入一个页面（）
   vuePagePaths: {
@@ -96,7 +96,7 @@ export default {
 
 ## 部署
 
-```
+```md
 # build for production with minification
 npm run build
 

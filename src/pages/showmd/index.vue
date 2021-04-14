@@ -25,8 +25,7 @@ export default {
   },
   mounted () {
     let converter = new showdown.Converter()
-    let text = this.md.toString()
-    this.html = converter.makeHtml(text)
+    this.html = converter.makeHtml(this.md)
   }
 }
 </script>
